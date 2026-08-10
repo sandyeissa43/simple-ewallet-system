@@ -1,4 +1,4 @@
-package org.internship.simpleewalletsystem;
+package com.vois.simpleewalletsystem;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

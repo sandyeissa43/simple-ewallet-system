@@ -28,6 +28,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponse createUser(UserRequest request) {
 
+
         log.info("Creating user with email {}", request.getEmail());
 
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -42,6 +43,8 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         User savedUser = userRepository.save(user);
+        walletService.createWallet(savedUser);
+
 
         log.info("User created successfully with id {}", savedUser.getId());
         return userMapper.toResponse(savedUser);

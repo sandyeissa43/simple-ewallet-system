@@ -32,10 +32,8 @@ public class WalletServiceImpl implements WalletService {
                 .build();
 
         Wallet savedWallet = walletRepository.save(wallet);
-
         return walletMapper.toResponse(savedWallet);
     }
-
 
 
     @Override

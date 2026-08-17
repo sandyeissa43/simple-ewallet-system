@@ -11,25 +11,30 @@ import com.vois.simpleewalletsystem.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import  com.vois.simpleewalletsystem.entity.User;
+import com.vois.simpleewalletsystem.entity.User;
 
 import java.math.BigDecimal;
+
 
 @Service
 @RequiredArgsConstructor
 public class WalletServiceImpl implements WalletService {
 
     private final WalletRepository walletRepository;
+
     private final WalletMapper walletMapper;
     @Override
-    public  WalletResponse createWallet (User user){
-        Wallet wallet= Wallet.builder()
+    public WalletResponse createWallet(User user) {
+
+        Wallet wallet = Wallet.builder()
                 .user(user)
                 .balance(BigDecimal.ZERO)
                 .build();
+
         Wallet savedWallet = walletRepository.save(wallet);
         return walletMapper.toResponse(savedWallet);
     }
+
 
     @Override
     public WalletResponse getWalletById(Long walletId) {

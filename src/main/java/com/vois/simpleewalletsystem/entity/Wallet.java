@@ -3,6 +3,7 @@ package com.vois.simpleewalletsystem.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -19,10 +20,28 @@ public class Wallet {
     @Column(nullable = false)
     @Builder.Default
     private  BigDecimal balance = BigDecimal.ZERO;
+
+    @Version
+    private long version;
+
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private  User user;
     @OneToMany(mappedBy = "wallet",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Transaction> transactions;
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
 
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

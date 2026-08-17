@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import com.vois.simpleewalletsystem.mapper.UserMapper;
 import java.util.List;
+import com.vois.simpleewalletsystem.service.WalletService;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,8 +22,10 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final WalletService walletService;
 
     @Override
+    @Transactional
     public UserResponse createUser(UserRequest request) {
 
         log.info("Creating user with email {}", request.getEmail());

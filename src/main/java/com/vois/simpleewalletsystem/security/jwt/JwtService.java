@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Service
@@ -19,7 +20,9 @@ public class JwtService {
     private Long expiration;
 
     private SecretKey getSecretKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
+        return Keys.hmacShaKeyFor(
+                secret.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     public String generateToken(String email, String role) {
@@ -38,6 +41,7 @@ public class JwtService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+
         return claims.getSubject();
     }
 
@@ -47,11 +51,13 @@ public class JwtService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+
         return claims.getExpiration().before(new Date());
     }
 
     public boolean isTokenValid(String token, String email) {
         String username = extractUsername(token);
+
         return username.equals(email) && !isTokenExpired(token);
     }
 }

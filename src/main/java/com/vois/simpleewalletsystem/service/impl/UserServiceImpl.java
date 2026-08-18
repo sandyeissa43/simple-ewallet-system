@@ -2,15 +2,18 @@ package com.vois.simpleewalletsystem.service.impl;
 
 import com.vois.simpleewalletsystem.dto.request.UserRequest;
 import com.vois.simpleewalletsystem.dto.response.UserResponse;
+import com.vois.simpleewalletsystem.enums.Role;
 import com.vois.simpleewalletsystem.entity.User;
 import com.vois.simpleewalletsystem.exception.DuplicateEmailException;
 import com.vois.simpleewalletsystem.exception.UserNotFoundException;
+import com.vois.simpleewalletsystem.mapper.UserMapper;
 import com.vois.simpleewalletsystem.repository.UserRepository;
 import com.vois.simpleewalletsystem.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import com.vois.simpleewalletsystem.mapper.UserMapper;
+
 import java.util.List;
 import com.vois.simpleewalletsystem.service.WalletService;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +25,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
     private final WalletService walletService;
 
     @Override
@@ -38,8 +42,8 @@ public class UserServiceImpl implements UserService {
         User user = User.builder()
                 .fullName(request.getFullName())
                 .email(request.getEmail())
-                .password(request.getPassword())
-                .role(request.getRole())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(Role.USER)
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -47,8 +51,8 @@ public class UserServiceImpl implements UserService {
 
 
         log.info("User created successfully with id {}", savedUser.getId());
-        return userMapper.toResponse(savedUser);
 
+        return userMapper.toResponse(savedUser);
     }
 
     @Override
@@ -57,7 +61,8 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
                         new UserNotFoundException("User not found with id: " + id));
-        if (!user.getActive()){
+
+        if (!user.getActive()) {
             throw new UserNotFoundException("User is deactivated");
         }
 
@@ -71,7 +76,6 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() ->
                         new UserNotFoundException("User not found with id: " + id));
 
-        // Check if the new email belongs to another user
         if (!user.getEmail().equals(request.getEmail())
                 && userRepository.existsByEmail(request.getEmail())) {
 
@@ -80,7 +84,7 @@ public class UserServiceImpl implements UserService {
 
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         User updatedUser = userRepository.save(user);
 
@@ -95,13 +99,14 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
                         new UserNotFoundException("User not found with id: " + id));
-        user.setActive(false);
 
+        user.setActive(false);
 
         userRepository.save(user);
 
         log.info("User deactivated successfully with id {}", id);
     }
+
     @Override
     public List<UserResponse> getAllUsers() {
 
@@ -110,7 +115,5 @@ public class UserServiceImpl implements UserService {
                 .map(userMapper::toResponse)
                 .toList();
     }
-
-
 }
 

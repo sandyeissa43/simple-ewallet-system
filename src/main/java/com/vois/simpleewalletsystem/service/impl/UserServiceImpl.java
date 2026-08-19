@@ -14,6 +14,7 @@ import com.vois.simpleewalletsystem.mapper.UserMapper;
 import java.util.List;
 import com.vois.simpleewalletsystem.service.WalletService;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +24,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final WalletService walletService;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -38,7 +40,7 @@ public class UserServiceImpl implements UserService {
         User user = User.builder()
                 .fullName(request.getFullName())
                 .email(request.getEmail())
-                .password(request.getPassword())
+                .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
                 .build();
 
@@ -80,7 +82,7 @@ public class UserServiceImpl implements UserService {
 
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         User updatedUser = userRepository.save(user);
 

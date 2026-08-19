@@ -70,4 +70,14 @@ public class UserController {
         userService.deactivateUser(id);
         return ResponseEntity.ok("User deactivated successfully");
     }
+
+    @Operation(
+            summary = "Activate user",
+            description = "Activates a deactivated user by their ID"
+    )
+    @PatchMapping("/{id}/activate")
+    public ResponseEntity<String> activateUser(@PathVariable Long id) {
+        userService.activateUser(id);
+        return ResponseEntity.ok("User activated successfully");
+    }
 }

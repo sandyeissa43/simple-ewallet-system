@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import com.vois.simpleewalletsystem.service.WalletService;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,7 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final WalletService walletService;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional

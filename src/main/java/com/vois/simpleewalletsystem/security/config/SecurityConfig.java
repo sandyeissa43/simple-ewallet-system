@@ -121,6 +121,11 @@ public class SecurityConfig {
                                 "/users/*/deactivate"
                         ).hasRole("ADMIN")
 
+                        .requestMatchers(
+                                HttpMethod.PATCH,
+                                "/users/*/activate"
+                        ).hasRole("ADMIN")
+
 
                         .requestMatchers(
                                 HttpMethod.GET,

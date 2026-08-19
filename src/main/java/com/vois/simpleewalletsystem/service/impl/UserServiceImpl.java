@@ -115,5 +115,15 @@ public class UserServiceImpl implements UserService {
                 .map(userMapper::toResponse)
                 .toList();
     }
+
+    @Override
+    public void activateUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+
+        user.setActive(true);
+
+        userRepository.save(user);
+    }
 }
 

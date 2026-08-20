@@ -1,7 +1,7 @@
 package com.vois.simpleewalletsystem.config;
 
-import com.vois.simpleewalletsystem.dto.request.UserRequest;
-import com.vois.simpleewalletsystem.enums.Role;
+import com.vois.simpleewalletsystem.dto.generated.Role;
+import com.vois.simpleewalletsystem.dto.generated.UserRequest;
 import com.vois.simpleewalletsystem.repository.UserRepository;
 import com.vois.simpleewalletsystem.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -19,19 +19,16 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     public void run(String @NonNull ... args) {
 
-
         if (userRepository.findByEmail("admin@gmail.com").isEmpty()) {
 
-            UserRequest adminRequest = UserRequest.builder()
+            UserRequest adminRequest = new UserRequest()
                     .fullName("System Admin")
                     .email("admin@gmail.com")
                     .password("Admin@123")
-                    .role(Role.ADMIN)
-                    .build();
+                    .role(Role.ADMIN);
 
             userService.createUser(adminRequest);
         }
-
 
         for (int i = 1; i <= 99; i++) {
 
@@ -40,12 +37,11 @@ public class DataSeeder implements CommandLineRunner {
 
             if (userRepository.findByEmail(email).isEmpty()) {
 
-                UserRequest request = UserRequest.builder()
+                UserRequest request = new UserRequest()
                         .fullName(fullName)
                         .email(email)
                         .password("User@123")
-                        .role(Role.USER)
-                        .build();
+                        .role(Role.USER);
 
                 userService.createUser(request);
             }

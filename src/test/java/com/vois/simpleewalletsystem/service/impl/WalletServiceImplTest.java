@@ -1,8 +1,8 @@
 package com.vois.simpleewalletsystem.service.impl;
 
-import com.vois.simpleewalletsystem.dto.request.DepositRequest;
-import com.vois.simpleewalletsystem.dto.response.WalletBalanceResponse;
-import com.vois.simpleewalletsystem.dto.response.WalletResponse;
+import com.vois.simpleewalletsystem.dto.generated.DepositRequest;
+import com.vois.simpleewalletsystem.dto.generated.WalletBalanceResponse;
+import com.vois.simpleewalletsystem.dto.generated.WalletResponse;
 import com.vois.simpleewalletsystem.entity.User;
 import com.vois.simpleewalletsystem.entity.Wallet;
 import com.vois.simpleewalletsystem.exception.WalletNotFoundException;
@@ -17,7 +17,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -35,25 +36,36 @@ class WalletServiceImplTest {
 
     @Test
     void shouldGetWalletByIdSuccessfully() {
+
         Wallet wallet = Wallet.builder()
                 .id(1L)
                 .balance(BigDecimal.valueOf(100))
                 .user(User.builder().id(2L).build())
                 .build();
 
-        WalletResponse expectedResponse = WalletResponse.builder()
+        WalletResponse expectedResponse = new WalletResponse()
                 .id(1L)
                 .balance(BigDecimal.valueOf(100))
-                .userId(2L)
-                .build();
+                .userId(2L);
 
-        when(walletRepository.findById(1L)).thenReturn(Optional.of(wallet));
-        when(walletMapper.toResponse(wallet)).thenReturn(expectedResponse);
+        when(walletRepository.findById(1L))
+                .thenReturn(Optional.of(wallet));
 
-        WalletResponse actualResponse = walletService.getWalletById(1L);
+        when(walletMapper.toResponse(wallet))
+                .thenReturn(expectedResponse);
 
-        assertEquals(expectedResponse.getId(), actualResponse.getId());
-        assertEquals(expectedResponse.getBalance(), actualResponse.getBalance());
+        WalletResponse actualResponse =
+                walletService.getWalletById(1L);
+
+        assertEquals(
+                expectedResponse.getId(),
+                actualResponse.getId()
+        );
+
+        assertEquals(
+                expectedResponse.getBalance(),
+                actualResponse.getBalance()
+        );
 
         verify(walletRepository).findById(1L);
         verify(walletMapper).toResponse(wallet);
@@ -61,10 +73,14 @@ class WalletServiceImplTest {
 
     @Test
     void shouldThrowExceptionWhenWalletNotFound() {
-        when(walletRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(WalletNotFoundException.class,
-                () -> walletService.getWalletById(99L));
+        when(walletRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                WalletNotFoundException.class,
+                () -> walletService.getWalletById(99L)
+        );
 
         verify(walletRepository).findById(99L);
         verifyNoInteractions(walletMapper);
@@ -72,22 +88,30 @@ class WalletServiceImplTest {
 
     @Test
     void shouldGetWalletBalanceSuccessfully() {
+
         Wallet wallet = Wallet.builder()
                 .id(1L)
                 .balance(BigDecimal.valueOf(250))
                 .build();
 
-        WalletBalanceResponse expectedResponse = WalletBalanceResponse.builder()
-                .walletId(1L)
-                .balance(BigDecimal.valueOf(250))
-                .build();
+        WalletBalanceResponse expectedResponse =
+                new WalletBalanceResponse()
+                        .walletId(1L)
+                        .balance(BigDecimal.valueOf(250));
 
-        when(walletRepository.findById(1L)).thenReturn(Optional.of(wallet));
-        when(walletMapper.toBalanceResponse(wallet)).thenReturn(expectedResponse);
+        when(walletRepository.findById(1L))
+                .thenReturn(Optional.of(wallet));
 
-        WalletBalanceResponse actualResponse = walletService.getWalletBalance(1L);
+        when(walletMapper.toBalanceResponse(wallet))
+                .thenReturn(expectedResponse);
 
-        assertEquals(expectedResponse.getBalance(), actualResponse.getBalance());
+        WalletBalanceResponse actualResponse =
+                walletService.getWalletBalance(1L);
+
+        assertEquals(
+                expectedResponse.getBalance(),
+                actualResponse.getBalance()
+        );
 
         verify(walletRepository).findById(1L);
         verify(walletMapper).toBalanceResponse(wallet);
@@ -95,29 +119,38 @@ class WalletServiceImplTest {
 
     @Test
     void shouldDepositSuccessfully() {
+
         Wallet wallet = Wallet.builder()
                 .id(1L)
                 .balance(BigDecimal.valueOf(100))
                 .user(User.builder().id(2L).build())
                 .build();
 
-        DepositRequest request = DepositRequest.builder()
-                .amount(BigDecimal.valueOf(50))
-                .build();
+        DepositRequest request = new DepositRequest()
+                .amount(BigDecimal.valueOf(50));
 
-        WalletResponse expectedResponse = WalletResponse.builder()
-                .id(1L)
-                .balance(BigDecimal.valueOf(150))
-                .userId(2L)
-                .build();
+        WalletResponse expectedResponse =
+                new WalletResponse()
+                        .id(1L)
+                        .balance(BigDecimal.valueOf(150))
+                        .userId(2L);
 
-        when(walletRepository.findById(1L)).thenReturn(Optional.of(wallet));
-        when(walletRepository.save(any(Wallet.class))).thenReturn(wallet);
-        when(walletMapper.toResponse(wallet)).thenReturn(expectedResponse);
+        when(walletRepository.findById(1L))
+                .thenReturn(Optional.of(wallet));
 
-        WalletResponse actualResponse = walletService.deposit(1L, request);
+        when(walletRepository.save(any(Wallet.class)))
+                .thenReturn(wallet);
 
-        assertEquals(BigDecimal.valueOf(150), actualResponse.getBalance());
+        when(walletMapper.toResponse(wallet))
+                .thenReturn(expectedResponse);
+
+        WalletResponse actualResponse =
+                walletService.deposit(1L, request);
+
+        assertEquals(
+                BigDecimal.valueOf(150),
+                actualResponse.getBalance()
+        );
 
         verify(walletRepository).findById(1L);
         verify(walletRepository).save(wallet);
@@ -126,16 +159,22 @@ class WalletServiceImplTest {
 
     @Test
     void shouldThrowExceptionWhenDepositingToNonExistingWallet() {
-        DepositRequest request = DepositRequest.builder()
-                .amount(BigDecimal.valueOf(50))
-                .build();
 
-        when(walletRepository.findById(99L)).thenReturn(Optional.empty());
+        DepositRequest request = new DepositRequest()
+                .amount(BigDecimal.valueOf(50));
 
-        assertThrows(WalletNotFoundException.class,
-                () -> walletService.deposit(99L, request));
+        when(walletRepository.findById(99L))
+                .thenReturn(Optional.empty());
 
-        verify(walletRepository, never()).save(any(Wallet.class));
+        assertThrows(
+                WalletNotFoundException.class,
+                () -> walletService.deposit(99L, request)
+        );
+
+        verify(walletRepository).findById(99L);
+        verify(walletRepository, never())
+                .save(any(Wallet.class));
+
         verifyNoInteractions(walletMapper);
     }
 }

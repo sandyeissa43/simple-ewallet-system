@@ -242,7 +242,12 @@ components:
           example: sandy@example.com
           description: User's email address
 
-
+        password:
+          type: string
+          minLength: 8
+          maxLength: 20
+          example: Password123
+          description: User's password
 
         role:
           $ref: '#/components/schemas/Role'
@@ -300,9 +305,34 @@ components:
           format: double
           example: 1000.00
 
+        version:
+          type: integer
+          format: int64
+          example: 0
+
+        userId:
+          type: integer
+          format: int64
+          example: 1
+
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-08-17T10:30:00'
+
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2026-08-17T10:30:00'
+
     WalletBalanceResponse:
       type: object
       properties:
+        walletId:
+          type: integer
+          format: int64
+          example: 1
+
         balance:
           type: number
           format: double
@@ -318,3 +348,4 @@ components:
           format: double
           minimum: 0.01
           example: 500.00
+          description: Amount to deposit

@@ -4,7 +4,8 @@ import com.vois.simpleewalletsystem.dto.request.DepositRequest;
 import com.vois.simpleewalletsystem.dto.request.TransferRequest;
 import com.vois.simpleewalletsystem.dto.request.WithdrawalRequest;
 import com.vois.simpleewalletsystem.dto.response.TransactionResponse;
-import com.vois.simpleewalletsystem.service.impl.TransactionServiceImpl;
+import com.vois.simpleewalletsystem.service.TransactionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,63 +17,53 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TransactionController {
 
-    private final TransactionServiceImpl transactionService;
+    private final TransactionService transactionService;
 
-    // 1. Withdrawal Endpoint
     @PostMapping("/wallets/{walletId}/withdraw")
     public ResponseEntity<TransactionResponse> withdraw(
             @PathVariable Long walletId,
-            @RequestBody WithdrawalRequest request) {
+            @Valid @RequestBody WithdrawalRequest request) {
 
-        TransactionResponse response =
-                transactionService.withdraw(walletId, request);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                transactionService.withdraw(walletId, request)
+        );
     }
 
-    // 2. Transfer Endpoint
     @PostMapping("/wallets/{walletId}/transfer")
     public ResponseEntity<TransactionResponse> transfer(
             @PathVariable Long walletId,
-            @RequestBody TransferRequest request) {
+            @Valid @RequestBody TransferRequest request) {
 
-        TransactionResponse response =
-                transactionService.transfer(walletId, request);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                transactionService.transfer(walletId, request)
+        );
     }
 
-    // 3. Transaction History Endpoint
     @GetMapping("/wallets/{walletId}/history")
     public ResponseEntity<List<TransactionResponse>> getTransactionHistory(
             @PathVariable Long walletId) {
 
-        List<TransactionResponse> response =
-                transactionService.getTransactionHistory(walletId);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                transactionService.getTransactionHistory(walletId)
+        );
     }
 
-    // 4. Deposit Endpoint
     @PostMapping("/wallets/{walletId}/deposit")
     public ResponseEntity<TransactionResponse> deposit(
             @PathVariable Long walletId,
-            @RequestBody DepositRequest request) {
+            @Valid @RequestBody DepositRequest request) {
 
-        TransactionResponse response =
-                transactionService.deposit(walletId, request);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                transactionService.deposit(walletId, request)
+        );
     }
 
-    // 5. Get Transaction By ID Endpoint
     @GetMapping("/{transactionId}")
     public ResponseEntity<TransactionResponse> getTransactionById(
             @PathVariable Long transactionId) {
 
-        TransactionResponse response =
-                transactionService.getTransactionById(transactionId);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                transactionService.getTransactionById(transactionId)
+        );
     }
 }

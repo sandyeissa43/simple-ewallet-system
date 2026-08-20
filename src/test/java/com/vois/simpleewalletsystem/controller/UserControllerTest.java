@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vois.simpleewalletsystem.dto.request.UserRequest;
 import com.vois.simpleewalletsystem.dto.response.UserResponse;
 import com.vois.simpleewalletsystem.enums.Role;
+import com.vois.simpleewalletsystem.security.jwt.JwtAuthenticationFilter;
 import com.vois.simpleewalletsystem.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,9 @@ class UserControllerTest {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private final
     ObjectMapper objectMapper = new ObjectMapper();

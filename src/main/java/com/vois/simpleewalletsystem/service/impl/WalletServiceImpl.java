@@ -1,6 +1,5 @@
 package com.vois.simpleewalletsystem.service.impl;
 
-import com.vois.simpleewalletsystem.dto.request.DepositRequest;
 import com.vois.simpleewalletsystem.dto.response.WalletBalanceResponse;
 import com.vois.simpleewalletsystem.dto.response.WalletResponse;
 import com.vois.simpleewalletsystem.entity.Wallet;
@@ -10,7 +9,6 @@ import com.vois.simpleewalletsystem.repository.WalletRepository;
 import com.vois.simpleewalletsystem.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import com.vois.simpleewalletsystem.entity.User;
 
 import java.math.BigDecimal;
@@ -48,14 +46,6 @@ public class WalletServiceImpl implements WalletService {
         return walletMapper.toBalanceResponse(wallet);
     }
 
-    @Override
-    @Transactional
-    public WalletResponse deposit(Long walletId, DepositRequest request) {
-        Wallet wallet = findWalletOrThrow(walletId);
-        wallet.setBalance(wallet.getBalance().add(request.getAmount()));
-        Wallet savedWallet = walletRepository.save(wallet);
-        return walletMapper.toResponse(savedWallet);
-    }
 
     private Wallet findWalletOrThrow(Long walletId) {
         return walletRepository.findById(walletId)

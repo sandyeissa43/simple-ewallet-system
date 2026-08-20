@@ -4,10 +4,10 @@ import com.vois.simpleewalletsystem.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
@@ -23,8 +23,16 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    private static final String[] PUBLIC_ENDPOINTS = {
+            "/auth/**",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/h2-console/**"
+    };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
@@ -39,7 +47,6 @@ public class SecurityConfig {
 
         return configuration.getAuthenticationManager();
     }
-
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -85,7 +92,6 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
 
-
                 .cors(Customizer.withDefaults())
 
                 .headers(headers ->
@@ -93,7 +99,6 @@ public class SecurityConfig {
                                 HeadersConfigurer.FrameOptionsConfig::sameOrigin
                         )
                 )
-
 
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
@@ -103,44 +108,12 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        .requestMatchers(
-                                "/auth/**",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/h2-console/**"
-                        ).permitAll()
+                        .requestMatchers(PUBLIC_ENDPOINTS)
+                        .permitAll()
 
-
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/users"
-                        ).hasRole("ADMIN")
-
-                        .requestMatchers(
-                                HttpMethod.PATCH,
-                                "/users/*/deactivate"
-                        ).hasRole("ADMIN")
-
-                        .requestMatchers(
-                                HttpMethod.PATCH,
-                                "/users/*/activate"
-                        ).hasRole("ADMIN")
-
-
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/users/*"
-                        ).hasAnyRole("USER", "ADMIN")
-
-                        .requestMatchers(
-                                HttpMethod.PUT,
-                                "/users/*"
-                        ).hasAnyRole("USER", "ADMIN")
-
-
-                        .anyRequest().authenticated()
+                        .anyRequest()
+                        .authenticated()
                 )
-
 
                 .addFilterBefore(
                         jwtAuthenticationFilter,

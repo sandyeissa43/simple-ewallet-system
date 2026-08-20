@@ -28,7 +28,7 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final WalletService walletService;
-    private final PasswordEncoder passwordEncoder;
+
 
     @Override
     @Transactional

@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "transactions")
@@ -27,6 +28,9 @@ public class Transaction {
     @Builder.Default
     private LocalDateTime timestamp = LocalDateTime.now();
     @ManyToOne
-    @JoinColumn(name= "wallet_id", nullable = false)
-    private Wallet wallet;
+    @JoinColumn(name = "source_wallet_id")
+    private Wallet sourceWallet;
+    @ManyToOne
+    @JoinColumn(name = "destination_wallet_id")
+    private Wallet destinationWallet;
 }

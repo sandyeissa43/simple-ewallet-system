@@ -5,7 +5,16 @@ import com.vois.simpleewalletsystem.dto.response.WalletResponse;
 import com.vois.simpleewalletsystem.entity.User;
 
 public interface WalletService {
+
     WalletResponse createWallet(User user);
-    WalletResponse getWalletById(Long walletId);
-    WalletBalanceResponse getWalletBalance(Long walletId);
+
+    WalletResponse getWalletById(Long walletId, String userEmail);
+
+    WalletBalanceResponse getWalletBalance(Long walletId, String userEmail);
+
+    WalletResponse deposit(
+            Long walletId,
+            DepositRequest request,
+            String userEmail
+    );
 }

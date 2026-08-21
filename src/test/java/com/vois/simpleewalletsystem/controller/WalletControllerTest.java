@@ -6,6 +6,7 @@ import com.vois.simpleewalletsystem.security.jwt.JwtAuthenticationFilter;
 import com.vois.simpleewalletsystem.service.WalletService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -15,8 +16,11 @@ import java.math.BigDecimal;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.context.annotation.Import;
+@WebMvcTest(controllers = WalletController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@Import(WalletController.class)
 
-@WebMvcTest(WalletController.class)
 class WalletControllerTest {
 
     @Autowired

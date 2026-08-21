@@ -1,10 +1,8 @@
 package com.vois.simpleewalletsystem.controller;
 
-import com.vois.simpleewalletsystem.dto.request.DepositRequest;
 import com.vois.simpleewalletsystem.dto.response.WalletBalanceResponse;
 import com.vois.simpleewalletsystem.dto.response.WalletResponse;
 import com.vois.simpleewalletsystem.service.WalletService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

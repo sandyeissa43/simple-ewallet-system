@@ -24,6 +24,7 @@ paths:
   /users:
     post:
       tags:
+        -
         - Users
       summary: Create a new user
       description: Creates a new user with the provided information

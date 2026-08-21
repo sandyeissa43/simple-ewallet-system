@@ -6,8 +6,10 @@ import com.vois.simpleewalletsystem.dto.request.WithdrawalRequest;
 import com.vois.simpleewalletsystem.dto.response.TransactionResponse;
 import com.vois.simpleewalletsystem.entity.Transaction;
 import com.vois.simpleewalletsystem.entity.Wallet;
+import com.vois.simpleewalletsystem.enums.TransactionStatus;
 import com.vois.simpleewalletsystem.enums.TransactionType;
 import com.vois.simpleewalletsystem.exception.InsufficientBalanceException;
+import com.vois.simpleewalletsystem.exception.InvalidTransactionException;
 import com.vois.simpleewalletsystem.exception.TransactionNotFoundException;
 import com.vois.simpleewalletsystem.exception.WalletNotFoundException;
 import com.vois.simpleewalletsystem.repository.TransactionRepository;
@@ -18,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,11 +47,13 @@ public class TransactionServiceImpl implements TransactionService {
 
         wallet.setBalance(
                 wallet.getBalance().subtract(request.getAmount()));
+
         walletRepository.save(wallet);
 
         Transaction transaction = new Transaction();
         transaction.setAmount(request.getAmount());
         transaction.setType(TransactionType.WITHDRAW);
+        transaction.setStatus(TransactionStatus.SUCCESS);
         transaction.setSourceWallet(wallet);
 
         transaction = transactionRepository.save(transaction);
@@ -77,9 +80,15 @@ public class TransactionServiceImpl implements TransactionService {
                                 "Destination wallet not found with ID: "
                                         + request.getDestinationWalletId()));
 
+        if (sourceWallet.getId().equals(destinationWallet.getId())) {
+            throw new InvalidTransactionException(
+                    "Source and destination wallets must be different");
+        }
+
         if (sourceWallet.getBalance().compareTo(request.getAmount()) < 0) {
             throw new InsufficientBalanceException(
-                    "Insufficient balance for transfer.");
+                    "Insufficient balance for transfer. Current balance: "
+                            + sourceWallet.getBalance());
         }
 
         sourceWallet.setBalance(
@@ -94,6 +103,7 @@ public class TransactionServiceImpl implements TransactionService {
         Transaction transaction = new Transaction();
         transaction.setAmount(request.getAmount());
         transaction.setType(TransactionType.TRANSFER);
+        transaction.setStatus(TransactionStatus.SUCCESS);
         transaction.setSourceWallet(sourceWallet);
         transaction.setDestinationWallet(destinationWallet);
 
@@ -112,13 +122,14 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         List<Transaction> transactions =
-                transactionRepository.findBySourceWalletIdOrDestinationWalletId(
-                        walletId,
-                        walletId);
+                transactionRepository
+                        .findBySourceWalletIdOrDestinationWalletIdOrderByCreatedAtDesc(
+                walletId,
+                walletId);
 
         return transactions.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -140,6 +151,7 @@ public class TransactionServiceImpl implements TransactionService {
         Transaction transaction = new Transaction();
         transaction.setAmount(request.getAmount());
         transaction.setType(TransactionType.DEPOSIT);
+        transaction.setStatus(TransactionStatus.SUCCESS);
         transaction.setDestinationWallet(wallet);
 
         transaction = transactionRepository.save(transaction);
@@ -151,11 +163,12 @@ public class TransactionServiceImpl implements TransactionService {
     public TransactionResponse getTransactionById(
             Long transactionId) {
 
-        Transaction transaction = transactionRepository.findById(transactionId)
-                .orElseThrow(() ->
-                        new TransactionNotFoundException(
-                                "Transaction not found with ID: "
-                                        + transactionId));
+        Transaction transaction =
+                transactionRepository.findById(transactionId)
+                        .orElseThrow(() ->
+                                new TransactionNotFoundException(
+                                        "Transaction not found with ID: "
+                                                + transactionId));
 
         return convertToDTO(transaction);
     }
@@ -168,6 +181,8 @@ public class TransactionServiceImpl implements TransactionService {
         dto.setId(transaction.getId());
         dto.setAmount(transaction.getAmount());
         dto.setType(transaction.getType());
+        dto.setStatus(transaction.getStatus());
+        dto.setCreatedAt(transaction.getCreatedAt());
 
         if (transaction.getSourceWallet() != null) {
             dto.setSourceWalletId(

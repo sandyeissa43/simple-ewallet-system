@@ -25,19 +25,33 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(TransactionNotFoundException.class)
-    public ResponseEntity<String> handleTransactionNotFound(TransactionNotFoundException ex) {
+    public ResponseEntity<String> handleTransactionNotFound(
+            TransactionNotFoundException ex) {
+
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ex.getMessage());
     }
 
     @ExceptionHandler(DuplicateEmailException.class)
-    public ResponseEntity<String> handleDuplicateEmail(DuplicateEmailException ex) {
+    public ResponseEntity<String> handleDuplicateEmail(
+            DuplicateEmailException ex) {
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
     }
 
     @ExceptionHandler(InsufficientBalanceException.class)
-    public ResponseEntity<String> handleInsufficientBalance(InsufficientBalanceException ex) {
+    public ResponseEntity<String> handleInsufficientBalance(
+            InsufficientBalanceException ex) {
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidTransactionException.class)
+    public ResponseEntity<String> handleInvalidTransaction(
+            InvalidTransactionException ex) {
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
     }
@@ -50,8 +64,11 @@ public class GlobalExceptionHandler {
 
         ex.getBindingResult().getFieldErrors()
                 .forEach(error ->
-                        errors.put(error.getField(),
-                                error.getDefaultMessage()));
+                        errors.put(
+                                error.getField(),
+                                error.getDefaultMessage()
+                        )
+                );
 
         return ResponseEntity.badRequest().body(errors);
     }

@@ -155,6 +155,8 @@
                                 <interfaceOnly>true</interfaceOnly>
                                 <useSpringBoot3>true</useSpringBoot3>
                                 <dateLibrary>java8</dateLibrary>
+                                <useTags>true</useTags>
+
                             </configOptions>
                         </configuration>
                     </execution>

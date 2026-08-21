@@ -24,8 +24,8 @@ paths:
   /users:
     post:
       tags:
-        -
         - Users
+      operationId: createUser
       summary: Create a new user
       description: Creates a new user with the provided information
       requestBody:
@@ -47,6 +47,7 @@ paths:
     get:
       tags:
         - Users
+      operationId: getAllUsers
       summary: Get all users
       description: Retrieves a list of all users
       responses:
@@ -64,6 +65,7 @@ paths:
     get:
       tags:
         - Users
+      operationId: getUserById
       summary: Get user by ID
       description: Retrieves a user by their unique ID
       parameters:
@@ -87,6 +89,7 @@ paths:
     put:
       tags:
         - Users
+      operationId: updateUser
       summary: Update user
       description: Updates an existing user's information
       parameters:
@@ -120,6 +123,7 @@ paths:
     patch:
       tags:
         - Users
+      operationId: deactivateUser
       summary: Deactivate user
       description: Deactivates an active user by their ID
       parameters:
@@ -146,6 +150,7 @@ paths:
     get:
       tags:
         - Wallets
+      operationId: getWalletById
       summary: Get wallet by ID
       description: Retrieves a wallet by its unique ID
       parameters:
@@ -171,6 +176,7 @@ paths:
     get:
       tags:
         - Wallets
+      operationId: getWalletBalance
       summary: Get wallet balance
       description: Retrieves the current balance of a wallet
       parameters:
@@ -192,10 +198,13 @@ paths:
           description: Wallet not found
 
 
+  # ==================== TRANSACTIONS ====================
+
   /api/transactions/wallets/{walletId}/deposit:
     post:
       tags:
         - Transactions
+      operationId: deposit
       summary: Deposit money
       description: Deposits money into a wallet and creates a transaction record
       parameters:
@@ -229,6 +238,7 @@ paths:
     post:
       tags:
         - Transactions
+      operationId: withdraw
       summary: Withdraw money
       description: Withdraws money from a wallet
       parameters:
@@ -262,6 +272,7 @@ paths:
     post:
       tags:
         - Transactions
+      operationId: transfer
       summary: Transfer money
       description: Transfers money from one wallet to another
       parameters:
@@ -295,6 +306,7 @@ paths:
     get:
       tags:
         - Transactions
+      operationId: getTransactionHistory
       summary: Get transaction history
       description: Retrieves all transactions associated with a wallet
       parameters:
@@ -322,6 +334,7 @@ paths:
     get:
       tags:
         - Transactions
+      operationId: getTransactionById
       summary: Get transaction by ID
       description: Retrieves a transaction by its unique ID
       parameters:

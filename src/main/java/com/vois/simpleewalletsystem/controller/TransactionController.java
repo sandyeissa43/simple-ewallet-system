@@ -1,69 +1,152 @@
 package com.vois.simpleewalletsystem.controller;
 
+import com.example.api.TransactionsApi;
+import com.example.model.TransactionStatus;
+import com.example.model.TransactionType;
 import com.vois.simpleewalletsystem.dto.request.DepositRequest;
 import com.vois.simpleewalletsystem.dto.request.TransferRequest;
 import com.vois.simpleewalletsystem.dto.request.WithdrawalRequest;
 import com.vois.simpleewalletsystem.dto.response.TransactionResponse;
 import com.vois.simpleewalletsystem.service.TransactionService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/transactions")
 @RequiredArgsConstructor
-public class TransactionController {
+public class TransactionController implements TransactionsApi {
 
     private final TransactionService transactionService;
 
-    @PostMapping("/wallets/{walletId}/withdraw")
-    public ResponseEntity<TransactionResponse> withdraw(
-            @PathVariable Long walletId,
-            @Valid @RequestBody WithdrawalRequest request) {
+    @Override
+    public ResponseEntity<com.example.model.TransactionResponse> deposit(
+            Long walletId,
+            com.example.model.DepositRequest request) {
 
-        return ResponseEntity.ok(
-                transactionService.withdraw(walletId, request)
+        DepositRequest serviceRequest = new DepositRequest();
+
+        serviceRequest.setAmount(
+                BigDecimal.valueOf(request.getAmount())
         );
+
+        TransactionResponse response =
+                transactionService.deposit(walletId, serviceRequest);
+
+        return ResponseEntity.ok(toGeneratedResponse(response));
     }
 
-    @PostMapping("/wallets/{walletId}/transfer")
-    public ResponseEntity<TransactionResponse> transfer(
-            @PathVariable Long walletId,
-            @Valid @RequestBody TransferRequest request) {
+    @Override
+    public ResponseEntity<com.example.model.TransactionResponse> withdraw(
+            Long walletId,
+            com.example.model.WithdrawalRequest request) {
 
-        return ResponseEntity.ok(
-                transactionService.transfer(walletId, request)
+        WithdrawalRequest serviceRequest = new WithdrawalRequest();
+
+        serviceRequest.setAmount(
+                BigDecimal.valueOf(request.getAmount())
         );
+
+        TransactionResponse response =
+                transactionService.withdraw(walletId, serviceRequest);
+
+        return ResponseEntity.ok(toGeneratedResponse(response));
     }
 
-    @GetMapping("/wallets/{walletId}/history")
-    public ResponseEntity<List<TransactionResponse>> getTransactionHistory(
-            @PathVariable Long walletId) {
+    @Override
+    public ResponseEntity<com.example.model.TransactionResponse> transfer(
+            Long walletId,
+            com.example.model.TransferRequest request) {
 
-        return ResponseEntity.ok(
-                transactionService.getTransactionHistory(walletId)
+        TransferRequest serviceRequest = new TransferRequest();
+
+        serviceRequest.setAmount(
+                BigDecimal.valueOf(request.getAmount())
         );
+
+        serviceRequest.setDestinationWalletId(
+                request.getDestinationWalletId()
+        );
+
+        TransactionResponse response =
+                transactionService.transfer(walletId, serviceRequest);
+
+        return ResponseEntity.ok(toGeneratedResponse(response));
     }
 
-    @PostMapping("/wallets/{walletId}/deposit")
-    public ResponseEntity<TransactionResponse> deposit(
-            @PathVariable Long walletId,
-            @Valid @RequestBody DepositRequest request) {
+    @Override
+    public ResponseEntity<List<com.example.model.TransactionResponse>>
+    getTransactionHistory(Long walletId) {
 
-        return ResponseEntity.ok(
-                transactionService.deposit(walletId, request)
-        );
+        List<TransactionResponse> responses =
+                transactionService.getTransactionHistory(walletId);
+
+        List<com.example.model.TransactionResponse> generatedResponses =
+                responses.stream()
+                        .map(this::toGeneratedResponse)
+                        .toList();
+
+        return ResponseEntity.ok(generatedResponses);
     }
 
-    @GetMapping("/{transactionId}")
-    public ResponseEntity<TransactionResponse> getTransactionById(
-            @PathVariable Long transactionId) {
+    @Override
+    public ResponseEntity<com.example.model.TransactionResponse>
+    getTransactionById(Long transactionId) {
 
-        return ResponseEntity.ok(
-                transactionService.getTransactionById(transactionId)
+        TransactionResponse response =
+                transactionService.getTransactionById(transactionId);
+
+        return ResponseEntity.ok(toGeneratedResponse(response));
+    }
+
+    private com.example.model.TransactionResponse toGeneratedResponse(
+            TransactionResponse response) {
+
+        com.example.model.TransactionResponse generated =
+                new com.example.model.TransactionResponse();
+
+        generated.setId(response.getId());
+
+        generated.setAmount(
+                response.getAmount() != null
+                        ? response.getAmount().doubleValue()
+                        : null
         );
+
+        generated.setType(
+                response.getType() != null
+                        ? TransactionType.valueOf(response.getType().name())
+                        : null
+        );
+
+        generated.setStatus(
+                response.getStatus() != null
+                        ? TransactionStatus.valueOf(response.getStatus().name())
+                        : null
+        );
+
+        generated.setCreatedAt(
+                response.getCreatedAt() != null
+                        ? response.getCreatedAt().atOffset(
+                        java.time.ZoneOffset.UTC)
+                        : null
+        );
+
+        generated.setSourceWalletId(
+                response.getSourceWalletId() != null
+                        ? JsonNullable.of(response.getSourceWalletId())
+                        : JsonNullable.undefined()
+        );
+
+        generated.setDestinationWalletId(
+                response.getDestinationWalletId() != null
+                        ? JsonNullable.of(response.getDestinationWalletId())
+                        : JsonNullable.undefined()
+        );
+
+        return generated;
     }
 }

@@ -2,6 +2,7 @@ package com.vois.simpleewalletsystem.service;
 import com.vois.simpleewalletsystem.dto.generated.UserRequest;
 import com.vois.simpleewalletsystem.dto.generated.UserResponse;
 import java.util.List;
+import com.example.model.DepositRequest;
 
 public interface UserService {
     UserResponse createUser(UserRequest request);

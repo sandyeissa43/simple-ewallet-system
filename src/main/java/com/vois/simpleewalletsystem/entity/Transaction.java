@@ -1,5 +1,6 @@
 package com.vois.simpleewalletsystem.entity;
 
+import com.vois.simpleewalletsystem.enums.TransactionStatus;
 import com.vois.simpleewalletsystem.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,18 +16,32 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Transaction {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TransactionType type;
-    @Column(nullable = false)
-    private BigDecimal amount;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private LocalDateTime timestamp = LocalDateTime.now();
+    private TransactionStatus status = TransactionStatus.SUCCESS;
+
+    @Column(nullable = false)
+    private BigDecimal amount;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
+
     @ManyToOne
-    @JoinColumn(name= "wallet_id", nullable = false)
-    private Wallet wallet;
+    @JoinColumn(name = "source_wallet_id")
+    private Wallet sourceWallet;
+
+    @ManyToOne
+    @JoinColumn(name = "destination_wallet_id")
+    private Wallet destinationWallet;
 }

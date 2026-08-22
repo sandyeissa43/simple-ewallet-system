@@ -4,15 +4,20 @@ import com.vois.simpleewalletsystem.dto.generated.UserRequest;
 import com.vois.simpleewalletsystem.dto.generated.UserResponse;
 import com.vois.simpleewalletsystem.enums.Role;
 import com.vois.simpleewalletsystem.entity.User;
+import com.vois.simpleewalletsystem.enums.Role;
 import com.vois.simpleewalletsystem.exception.DuplicateEmailException;
 import com.vois.simpleewalletsystem.exception.UserNotFoundException;
 import com.vois.simpleewalletsystem.mapper.UserMapper;
 import com.vois.simpleewalletsystem.repository.UserRepository;
 import com.vois.simpleewalletsystem.service.UserService;
+import com.vois.simpleewalletsystem.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import com.vois.simpleewalletsystem.service.WalletService;
@@ -32,7 +37,6 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponse createUser(UserRequest request) {
 
-
         log.info("Creating user with email {}", request.getEmail());
 
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -44,11 +48,12 @@ public class UserServiceImpl implements UserService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(com.vois.simpleewalletsystem.enums.Role.valueOf(request.getRole().name()))
+                .active(true)
                 .build();
 
         User savedUser = userRepository.save(user);
-        walletService.createWallet(savedUser);
 
+        walletService.createWallet(savedUser);
 
         log.info("User created successfully with id {}", savedUser.getId());
 
@@ -66,6 +71,8 @@ public class UserServiceImpl implements UserService {
             throw new UserNotFoundException("User is deactivated");
         }
 
+        checkOwnership(user, getCurrentUser());
+
         return userMapper.toResponse(user);
     }
 
@@ -76,6 +83,8 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() ->
                         new UserNotFoundException("User not found with id: " + id));
 
+        checkOwnership(user, getCurrentUser());
+
         if (!user.getEmail().equals(request.getEmail())
                 && userRepository.existsByEmail(request.getEmail())) {
 
@@ -84,7 +93,14 @@ public class UserServiceImpl implements UserService {
 
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        if (request.getPassword() != null
+                && !request.getPassword().isBlank()) {
+
+            user.setPassword(
+                    passwordEncoder.encode(request.getPassword())
+            );
+        }
 
         User updatedUser = userRepository.save(user);
 
@@ -118,12 +134,40 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void activateUser(Long id) {
+
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+                .orElseThrow(() ->
+                        new UserNotFoundException("User not found with id: " + id));
 
         user.setActive(true);
 
         userRepository.save(user);
+
+        log.info("User activated successfully with id {}", id);
+    }
+
+    private User getCurrentUser() {
+
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new UserNotFoundException("User not found"));
+    }
+
+    private void checkOwnership(User target, User caller) {
+
+        if (caller.getRole() == Role.ADMIN) {
+            return;
+        }
+
+        if (!target.getId().equals(caller.getId())) {
+
+            throw new AccessDeniedException(
+                    "You do not have access to this user's data"
+            );
+        }
     }
 }
-

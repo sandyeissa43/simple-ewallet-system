@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 
 @Getter
 @Setter
-public class DepositRequest {
+public class WithdrawalRequest {
 
     @NotNull(message = "Amount is required")
     @Positive(message = "Amount must be greater than zero")

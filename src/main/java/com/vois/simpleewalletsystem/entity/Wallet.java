@@ -27,8 +27,11 @@ public class Wallet {
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private  User user;
-    @OneToMany(mappedBy = "wallet",cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Transaction> transactions;
+    @OneToMany(mappedBy = "sourceWallet", cascade = CascadeType.ALL)
+    private List<Transaction> outgoingTransactions;
+
+    @OneToMany(mappedBy = "destinationWallet", cascade = CascadeType.ALL)
+    private List<Transaction> incomingTransactions;
     @Column(updatable = false)
     private LocalDateTime createdAt;
 

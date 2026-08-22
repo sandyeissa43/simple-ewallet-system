@@ -7,8 +7,11 @@ import com.vois.simpleewalletsystem.service.WalletService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
+import com.example.model.DepositRequest;
+import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/wallets")
 @RequiredArgsConstructor
@@ -17,30 +20,46 @@ public class WalletController {
     private final WalletService walletService;
 
     @GetMapping("/{walletId}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<WalletResponse> getWallet(
-            @PathVariable Long walletId) {
+            @PathVariable Long walletId,
+            Authentication authentication) {
 
         return ResponseEntity.ok(
-                walletService.getWalletById(walletId)
+                walletService.getWalletById(
+                        walletId,
+                        authentication.getName()
+                )
         );
     }
 
     @GetMapping("/{walletId}/balance")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<WalletBalanceResponse> getBalance(
-            @PathVariable Long walletId) {
+            @PathVariable Long walletId,
+            Authentication authentication) {
 
         return ResponseEntity.ok(
-                walletService.getWalletBalance(walletId)
+                walletService.getWalletBalance(
+                        walletId,
+                        authentication.getName()
+                )
         );
     }
 
     @PostMapping("/{walletId}/deposit")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<WalletResponse> deposit(
             @PathVariable Long walletId,
-            @Valid @RequestBody DepositRequest request) {
+            @Valid @RequestBody DepositRequest request,
+            Authentication authentication) {
 
         return ResponseEntity.ok(
-                walletService.deposit(walletId, request)
+                walletService.deposit(
+                        walletId,
+                        request,
+                        authentication.getName()
+                )
         );
     }
 }

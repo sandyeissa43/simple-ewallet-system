@@ -107,11 +107,13 @@
         <artifactId>spring-boot-starter-test</artifactId>
         <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.openapitools</groupId>
             <artifactId>jackson-databind-nullable</artifactId>
             <version>0.2.6</version>
         </dependency>
+n
     </dependencies>
 
     <build>
@@ -122,6 +124,38 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
 
+                <executions>
+                    <execution>
+                        <id>generate-api</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+
+                        <configuration>
+                            <generatorName>spring</generatorName>
+
+                            <inputSpec>
+                                ${project.basedir}/docs/openapi.yaml
+                            </inputSpec>
+
+                            <output>
+                                ${project.build.directory}/generated-sources/openapi
+                            </output>
+
+                            <apiPackage>com.example.api</apiPackage>
+                            <modelPackage>com.example.model</modelPackage>
+
+                            <configOptions>
+                                <interfaceOnly>true</interfaceOnly>
+                                <useSpringBoot3>true</useSpringBoot3>
+                                <dateLibrary>java8</dateLibrary>
+                                <useTags>true</useTags>
+
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

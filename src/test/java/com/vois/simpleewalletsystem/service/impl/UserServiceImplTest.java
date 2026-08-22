@@ -4,6 +4,7 @@ import com.vois.simpleewalletsystem.dto.generated.Role;
 import com.vois.simpleewalletsystem.dto.generated.UserRequest;
 import com.vois.simpleewalletsystem.dto.generated.UserResponse;
 import com.vois.simpleewalletsystem.entity.User;
+import com.vois.simpleewalletsystem.enums.Role;
 import com.vois.simpleewalletsystem.exception.DuplicateEmailException;
 import com.vois.simpleewalletsystem.exception.UserNotFoundException;
 import com.vois.simpleewalletsystem.mapper.UserMapper;
@@ -43,6 +44,7 @@ class UserServiceImplTest {
     @InjectMocks
     private UserServiceImpl userService;
 
+
     @Test
     void shouldCreateUserSuccessfully() {
 
@@ -57,7 +59,7 @@ class UserServiceImplTest {
                 .fullName("Sandy Eissa")
                 .email("sandy@gmail.com")
                 .password("encodedPassword")
-                .role(com.vois.simpleewalletsystem.enums.Role.USER)
+                .role(Role.USER)
                 .active(true)
                 .build();
 
@@ -86,6 +88,7 @@ class UserServiceImplTest {
         assertEquals(expectedResponse.getFullName(), actualResponse.getFullName());
         assertEquals(expectedResponse.getEmail(), actualResponse.getEmail());
         assertEquals(expectedResponse.getRole(), actualResponse.getRole());
+        assertEquals(expectedResponse.getActive(), actualResponse.getActive());
 
         verify(userRepository).existsByEmail(request.getEmail());
         verify(passwordEncoder).encode(request.getPassword());
@@ -93,6 +96,7 @@ class UserServiceImplTest {
         verify(walletService).createWallet(savedUser);
         verify(userMapper).toResponse(savedUser);
     }
+
 
     @Test
     void shouldThrowExceptionWhenEmailAlreadyExists() {
@@ -113,10 +117,13 @@ class UserServiceImplTest {
 
         verify(userRepository).existsByEmail(request.getEmail());
         verify(userRepository, never()).save(any(User.class));
+        verifyNoInteractions(passwordEncoder);
+        verifyNoInteractions(walletService);
         verifyNoInteractions(userMapper);
         verifyNoInteractions(walletService);
         verifyNoInteractions(passwordEncoder);
     }
+
 
     @Test
     void shouldGetUserByIdSuccessfully() {
@@ -125,7 +132,8 @@ class UserServiceImplTest {
                 .id(1L)
                 .fullName("Sandy Eissa")
                 .email("sandy@gmail.com")
-                .password("12345678")
+                .password("encodedPassword")
+                .role(Role.USER)
                 .active(true)
                 .build();
 
@@ -133,7 +141,9 @@ class UserServiceImplTest {
                 .id(1L)
                 .fullName("Sandy Eissa")
                 .email("sandy@gmail.com")
-                .active(true);
+                .role(Role.USER)
+                .active(true)
+                .build();
 
         when(userRepository.findById(1L))
                 .thenReturn(Optional.of(user));
@@ -141,7 +151,8 @@ class UserServiceImplTest {
         when(userMapper.toResponse(user))
                 .thenReturn(expectedResponse);
 
-        UserResponse actualResponse = userService.getUserById(1L);
+        UserResponse actualResponse =
+                userService.getUserById(1L);
 
         assertEquals(expectedResponse.getId(), actualResponse.getId());
         assertEquals(expectedResponse.getEmail(), actualResponse.getEmail());
@@ -150,6 +161,7 @@ class UserServiceImplTest {
         verify(userMapper).toResponse(user);
     }
 
+ main
     @Test
     void shouldThrowExceptionWhenUserNotFound() {
 
@@ -164,6 +176,7 @@ class UserServiceImplTest {
         verify(userRepository).findById(1L);
         verifyNoInteractions(userMapper);
     }
+
 
     @Test
     void shouldThrowExceptionWhenUserIsDeactivated() {
@@ -185,6 +198,7 @@ class UserServiceImplTest {
         verifyNoInteractions(userMapper);
     }
 
+
     @Test
     void shouldUpdateUserSuccessfully() {
 
@@ -198,7 +212,7 @@ class UserServiceImplTest {
                 .id(1L)
                 .fullName("Old Name")
                 .email("old@gmail.com")
-                .password("11111111")
+                .password("oldEncodedPassword")
                 .active(true)
                 .build();
 
@@ -215,7 +229,7 @@ class UserServiceImplTest {
                 .thenReturn(false);
 
         when(passwordEncoder.encode(request.getPassword()))
-                .thenReturn("encodedPassword");
+                .thenReturn("newEncodedPassword");
 
         when(userRepository.save(user))
                 .thenReturn(user);
@@ -223,7 +237,8 @@ class UserServiceImplTest {
         when(userMapper.toResponse(user))
                 .thenReturn(expectedResponse);
 
-        UserResponse actualResponse = userService.updateUser(1L, request);
+        UserResponse actualResponse =
+                userService.updateUser(1L, request);
 
         assertEquals(
                 expectedResponse.getFullName(),
@@ -258,6 +273,10 @@ class UserServiceImplTest {
         verifyNoInteractions(userMapper);
     }
 
+        verifyNoInteractions(passwordEncoder);
+    }
+
+
     @Test
     void shouldThrowExceptionWhenUpdatingWithExistingEmail() {
 
@@ -270,6 +289,7 @@ class UserServiceImplTest {
         User user = User.builder()
                 .id(1L)
                 .email("old@gmail.com")
+                .active(true)
                 .build();
 
         when(userRepository.findById(1L))
@@ -288,6 +308,10 @@ class UserServiceImplTest {
         verifyNoInteractions(passwordEncoder);
         verifyNoInteractions(userMapper);
     }
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
 
     @Test
     void shouldDeactivateUserSuccessfully() {
@@ -308,6 +332,7 @@ class UserServiceImplTest {
         verify(userRepository).save(user);
     }
 
+
     @Test
     void shouldThrowExceptionWhenDeactivatingNonExistingUser() {
 
@@ -322,6 +347,7 @@ class UserServiceImplTest {
         verify(userRepository).findById(1L);
         verify(userRepository, never()).save(any(User.class));
     }
+
 
     @Test
     void shouldReturnAllActiveUsers() {
@@ -343,7 +369,8 @@ class UserServiceImplTest {
         when(userMapper.toResponse(user))
                 .thenReturn(response);
 
-        List<UserResponse> users = userService.getAllUsers();
+        List<UserResponse> users =
+                userService.getAllUsers();
 
         assertEquals(1, users.size());
         assertEquals("Sandy", users.get(0).getFullName());
@@ -351,4 +378,38 @@ class UserServiceImplTest {
         verify(userRepository).findByActiveTrue();
         verify(userMapper).toResponse(user);
     }
+@Test
+void shouldActivateUserSuccessfully() {
+
+    User user = User.builder()
+            .id(1L)
+            .active(false)
+            .build();
+
+    when(userRepository.findById(1L))
+            .thenReturn(Optional.of(user));
+
+    userService.activateUser(1L);
+
+    assertEquals(true, user.getActive());
+
+    verify(userRepository).findById(1L);
+    verify(userRepository).save(user);
+}
+
+
+@Test
+void shouldThrowExceptionWhenActivatingNonExistingUser() {
+
+    when(userRepository.findById(1L))
+            .thenReturn(Optional.empty());
+
+    assertThrows(
+            UserNotFoundException.class,
+            () -> userService.activateUser(1L)
+    );
+
+    verify(userRepository).findById(1L);
+    verify(userRepository, never()).save(any(User.class));
+}
 }

@@ -1,15 +1,16 @@
-
 package com.vois.simpleewalletsystem.controller;
 import com.vois.simpleewalletsystem.dto.generated.UserRequest;
 import com.vois.simpleewalletsystem.dto.generated.UserResponse;
 import com.vois.simpleewalletsystem.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
+
 import java.util.List;
 
 @RestController
@@ -22,53 +23,81 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+
     @Operation(
             summary = "Create a new user",
             description = "Creates a new user with the provided information"
     )
-
     @PostMapping
-    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserRequest request) {
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<UserResponse> createUser(
+            @Valid @RequestBody UserRequest request) {
+
         UserResponse response = userService.createUser(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
+
     @Operation(
             summary = "Get all users",
             description = "Retrieves a list of all users"
     )
     @GetMapping
-    public ResponseEntity<List<UserResponse>> getAllUsers(){
-        return ResponseEntity.ok(userService.getAllUsers());
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<UserResponse>> getAllUsers() {
+
+        return ResponseEntity.ok(
+                userService.getAllUsers()
+        );
     }
+
     @Operation(
             summary = "Get user by ID",
             description = "Retrieves a user by their unique ID"
     )
-
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
-        UserResponse response = userService.getUserById(id);
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<UserResponse> getUserById(
+            @PathVariable Long id) {
+
+        UserResponse response =
+                userService.getUserById(id);
+
         return ResponseEntity.ok(response);
     }
+
     @Operation(
             summary = "Update user",
             description = "Updates an existing user's information"
     )
-
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id,@Valid @RequestBody UserRequest request) {
-        UserResponse response = userService.updateUser(id, request);
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<UserResponse> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UserRequest request) {
+
+        UserResponse response =
+                userService.updateUser(id, request);
+
         return ResponseEntity.ok(response);
     }
+
     @Operation(
             summary = "Deactivate user",
             description = "Deactivates an active user by their ID"
     )
-
     @PatchMapping("/{id}/deactivate")
-    public ResponseEntity<String> deactivateUser(@PathVariable Long id) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> deactivateUser(
+            @PathVariable Long id) {
+
         userService.deactivateUser(id);
-        return ResponseEntity.ok("User deactivated successfully");
+
+        return ResponseEntity.ok(
+                "User deactivated successfully"
+        );
     }
 
     @Operation(
@@ -76,8 +105,14 @@ public class UserController {
             description = "Activates a deactivated user by their ID"
     )
     @PatchMapping("/{id}/activate")
-    public ResponseEntity<String> activateUser(@PathVariable Long id) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> activateUser(
+            @PathVariable Long id) {
+
         userService.activateUser(id);
-        return ResponseEntity.ok("User activated successfully");
+
+        return ResponseEntity.ok(
+                "User activated successfully"
+        );
     }
 }

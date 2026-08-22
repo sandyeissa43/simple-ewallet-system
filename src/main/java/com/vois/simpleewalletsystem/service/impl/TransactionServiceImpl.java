@@ -5,7 +5,9 @@ import com.vois.simpleewalletsystem.dto.request.TransferRequest;
 import com.vois.simpleewalletsystem.dto.request.WithdrawalRequest;
 import com.vois.simpleewalletsystem.dto.response.TransactionResponse;
 import com.vois.simpleewalletsystem.entity.Transaction;
+import com.vois.simpleewalletsystem.entity.User;
 import com.vois.simpleewalletsystem.entity.Wallet;
+import com.vois.simpleewalletsystem.enums.Role;
 import com.vois.simpleewalletsystem.enums.TransactionStatus;
 import com.vois.simpleewalletsystem.enums.TransactionType;
 import com.vois.simpleewalletsystem.exception.InsufficientBalanceException;
@@ -13,9 +15,13 @@ import com.vois.simpleewalletsystem.exception.InvalidTransactionException;
 import com.vois.simpleewalletsystem.exception.TransactionNotFoundException;
 import com.vois.simpleewalletsystem.exception.WalletNotFoundException;
 import com.vois.simpleewalletsystem.repository.TransactionRepository;
+import com.vois.simpleewalletsystem.repository.UserRepository;
 import com.vois.simpleewalletsystem.repository.WalletRepository;
 import com.vois.simpleewalletsystem.service.TransactionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +33,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final WalletRepository walletRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -34,10 +41,7 @@ public class TransactionServiceImpl implements TransactionService {
             Long walletId,
             WithdrawalRequest request) {
 
-        Wallet wallet = walletRepository.findById(walletId)
-                .orElseThrow(() ->
-                        new WalletNotFoundException(
-                                "Wallet not found with ID: " + walletId));
+        Wallet wallet = getAuthorizedWallet(walletId);
 
         if (wallet.getBalance().compareTo(request.getAmount()) < 0) {
             throw new InsufficientBalanceException(
@@ -46,11 +50,13 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         wallet.setBalance(
-                wallet.getBalance().subtract(request.getAmount()));
+                wallet.getBalance().subtract(request.getAmount())
+        );
 
         walletRepository.save(wallet);
 
         Transaction transaction = new Transaction();
+
         transaction.setAmount(request.getAmount());
         transaction.setType(TransactionType.WITHDRAW);
         transaction.setStatus(TransactionStatus.SUCCESS);
@@ -67,40 +73,50 @@ public class TransactionServiceImpl implements TransactionService {
             Long walletId,
             TransferRequest request) {
 
-        Wallet sourceWallet = walletRepository.findById(walletId)
-                .orElseThrow(() ->
-                        new WalletNotFoundException(
-                                "Source wallet not found with ID: "
-                                        + walletId));
 
-        Wallet destinationWallet = walletRepository.findById(
-                        request.getDestinationWalletId())
-                .orElseThrow(() ->
-                        new WalletNotFoundException(
-                                "Destination wallet not found with ID: "
-                                        + request.getDestinationWalletId()));
+        Wallet sourceWallet = getAuthorizedWallet(walletId);
+
+
+        Wallet destinationWallet =
+                walletRepository.findById(
+                                request.getDestinationWalletId())
+                        .orElseThrow(() ->
+                                new WalletNotFoundException(
+                                        "Destination wallet not found with ID: "
+                                                + request.getDestinationWalletId()
+                                )
+                        );
 
         if (sourceWallet.getId().equals(destinationWallet.getId())) {
             throw new InvalidTransactionException(
-                    "Source and destination wallets must be different");
+                    "Source and destination wallets must be different"
+            );
         }
 
-        if (sourceWallet.getBalance().compareTo(request.getAmount()) < 0) {
+        if (sourceWallet.getBalance()
+                .compareTo(request.getAmount()) < 0) {
+
             throw new InsufficientBalanceException(
                     "Insufficient balance for transfer. Current balance: "
-                            + sourceWallet.getBalance());
+                            + sourceWallet.getBalance()
+            );
         }
 
         sourceWallet.setBalance(
-                sourceWallet.getBalance().subtract(request.getAmount()));
+                sourceWallet.getBalance()
+                        .subtract(request.getAmount())
+        );
 
         destinationWallet.setBalance(
-                destinationWallet.getBalance().add(request.getAmount()));
+                destinationWallet.getBalance()
+                        .add(request.getAmount())
+        );
 
         walletRepository.save(sourceWallet);
         walletRepository.save(destinationWallet);
 
         Transaction transaction = new Transaction();
+
         transaction.setAmount(request.getAmount());
         transaction.setType(TransactionType.TRANSFER);
         transaction.setStatus(TransactionStatus.SUCCESS);
@@ -116,16 +132,15 @@ public class TransactionServiceImpl implements TransactionService {
     public List<TransactionResponse> getTransactionHistory(
             Long walletId) {
 
-        if (!walletRepository.existsById(walletId)) {
-            throw new WalletNotFoundException(
-                    "Wallet not found with ID: " + walletId);
-        }
+
+        getAuthorizedWallet(walletId);
 
         List<Transaction> transactions =
                 transactionRepository
                         .findBySourceWalletIdOrDestinationWalletIdOrderByCreatedAtDesc(
-                walletId,
-                walletId);
+                                walletId,
+                                walletId
+                        );
 
         return transactions.stream()
                 .map(this::convertToDTO)
@@ -138,17 +153,19 @@ public class TransactionServiceImpl implements TransactionService {
             Long walletId,
             DepositRequest request) {
 
-        Wallet wallet = walletRepository.findById(walletId)
-                .orElseThrow(() ->
-                        new WalletNotFoundException(
-                                "Wallet not found with ID: " + walletId));
+        /*
+         * User can only deposit into their own wallet.
+         */
+        Wallet wallet = getAuthorizedWallet(walletId);
 
         wallet.setBalance(
-                wallet.getBalance().add(request.getAmount()));
+                wallet.getBalance().add(request.getAmount())
+        );
 
         walletRepository.save(wallet);
 
         Transaction transaction = new Transaction();
+
         transaction.setAmount(request.getAmount());
         transaction.setType(TransactionType.DEPOSIT);
         transaction.setStatus(TransactionStatus.SUCCESS);
@@ -168,30 +185,130 @@ public class TransactionServiceImpl implements TransactionService {
                         .orElseThrow(() ->
                                 new TransactionNotFoundException(
                                         "Transaction not found with ID: "
-                                                + transactionId));
+                                                + transactionId
+                                )
+                        );
+
+        /*
+         * Check that the authenticated user owns
+         * one of the wallets involved in the transaction.
+         */
+        if (transaction.getSourceWallet() != null) {
+
+            getAuthorizedWallet(
+                    transaction.getSourceWallet().getId()
+            );
+
+        } else if (transaction.getDestinationWallet() != null) {
+
+            getAuthorizedWallet(
+                    transaction.getDestinationWallet().getId()
+            );
+
+        } else {
+
+            throw new AccessDeniedException(
+                    "You are not authorized to access this transaction"
+            );
+        }
 
         return convertToDTO(transaction);
+    }
+
+
+    private Wallet getAuthorizedWallet(Long walletId) {
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        if (authentication == null ||
+                !authentication.isAuthenticated()) {
+
+            throw new AccessDeniedException(
+                    "User is not authenticated"
+            );
+        }
+
+        String email = authentication.getName();
+
+        User currentUser =
+                userRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new AccessDeniedException(
+                                        "Authenticated user not found"
+                                )
+                        );
+
+        Wallet wallet =
+                walletRepository.findById(walletId)
+                        .orElseThrow(() ->
+                                new WalletNotFoundException(
+                                        "Wallet not found with ID: "
+                                                + walletId
+                                )
+                        );
+
+
+        if (currentUser.getRole() == Role.ADMIN) {
+            return wallet;
+        }
+
+
+        if (wallet.getUser() == null ||
+                !wallet.getUser()
+                        .getId()
+                        .equals(currentUser.getId())) {
+
+            throw new AccessDeniedException(
+                    "You are not authorized to access this wallet"
+            );
+        }
+
+        return wallet;
     }
 
     private TransactionResponse convertToDTO(
             Transaction transaction) {
 
-        TransactionResponse dto = new TransactionResponse();
+        TransactionResponse dto =
+                new TransactionResponse();
 
         dto.setId(transaction.getId());
-        dto.setAmount(transaction.getAmount());
-        dto.setType(transaction.getType());
-        dto.setStatus(transaction.getStatus());
-        dto.setCreatedAt(transaction.getCreatedAt());
+
+        dto.setAmount(
+                transaction.getAmount()
+        );
+
+        dto.setType(
+                transaction.getType()
+        );
+
+        dto.setStatus(
+                transaction.getStatus()
+        );
+
+        dto.setCreatedAt(
+                transaction.getCreatedAt()
+        );
 
         if (transaction.getSourceWallet() != null) {
+
             dto.setSourceWalletId(
-                    transaction.getSourceWallet().getId());
+                    transaction
+                            .getSourceWallet()
+                            .getId()
+            );
         }
 
         if (transaction.getDestinationWallet() != null) {
+
             dto.setDestinationWalletId(
-                    transaction.getDestinationWallet().getId());
+                    transaction
+                            .getDestinationWallet()
+                            .getId()
+            );
         }
 
         return dto;

@@ -11,6 +11,7 @@ import com.vois.simpleewalletsystem.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
@@ -23,6 +24,7 @@ public class TransactionController implements TransactionsApi {
     private final TransactionService transactionService;
 
     @Override
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<com.example.model.TransactionResponse> deposit(
             Long walletId,
             com.example.model.DepositRequest request) {
@@ -40,6 +42,7 @@ public class TransactionController implements TransactionsApi {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<com.example.model.TransactionResponse> withdraw(
             Long walletId,
             com.example.model.WithdrawalRequest request) {
@@ -57,6 +60,7 @@ public class TransactionController implements TransactionsApi {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<com.example.model.TransactionResponse> transfer(
             Long walletId,
             com.example.model.TransferRequest request) {
@@ -78,6 +82,7 @@ public class TransactionController implements TransactionsApi {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<List<com.example.model.TransactionResponse>>
     getTransactionHistory(Long walletId) {
 
@@ -93,6 +98,7 @@ public class TransactionController implements TransactionsApi {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<com.example.model.TransactionResponse>
     getTransactionById(Long transactionId) {
 

@@ -5,17 +5,23 @@ import com.vois.simpleewalletsystem.dto.request.TransferRequest;
 import com.vois.simpleewalletsystem.dto.request.WithdrawalRequest;
 import com.vois.simpleewalletsystem.dto.response.TransactionResponse;
 import com.vois.simpleewalletsystem.entity.Transaction;
+import com.vois.simpleewalletsystem.entity.User;
 import com.vois.simpleewalletsystem.entity.Wallet;
+import com.vois.simpleewalletsystem.enums.Role;
 import com.vois.simpleewalletsystem.enums.TransactionStatus;
 import com.vois.simpleewalletsystem.enums.TransactionType;
 import com.vois.simpleewalletsystem.exception.InsufficientBalanceException;
 import com.vois.simpleewalletsystem.exception.InvalidTransactionException;
 import com.vois.simpleewalletsystem.exception.TransactionNotFoundException;
+import com.vois.simpleewalletsystem.exception.UserNotFoundException;
 import com.vois.simpleewalletsystem.exception.WalletNotFoundException;
 import com.vois.simpleewalletsystem.repository.TransactionRepository;
+import com.vois.simpleewalletsystem.repository.UserRepository;
 import com.vois.simpleewalletsystem.repository.WalletRepository;
 import com.vois.simpleewalletsystem.service.TransactionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +33,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final WalletRepository walletRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -38,6 +45,8 @@ public class TransactionServiceImpl implements TransactionService {
                 .orElseThrow(() ->
                         new WalletNotFoundException(
                                 "Wallet not found with ID: " + walletId));
+
+        checkOwnership(wallet, getCurrentUser());
 
         if (wallet.getBalance().compareTo(request.getAmount()) < 0) {
             throw new InsufficientBalanceException(
@@ -72,6 +81,8 @@ public class TransactionServiceImpl implements TransactionService {
                         new WalletNotFoundException(
                                 "Source wallet not found with ID: "
                                         + walletId));
+
+        checkOwnership(sourceWallet, getCurrentUser());
 
         Wallet destinationWallet = walletRepository.findById(
                         request.getDestinationWalletId())
@@ -116,16 +127,18 @@ public class TransactionServiceImpl implements TransactionService {
     public List<TransactionResponse> getTransactionHistory(
             Long walletId) {
 
-        if (!walletRepository.existsById(walletId)) {
-            throw new WalletNotFoundException(
-                    "Wallet not found with ID: " + walletId);
-        }
+        Wallet wallet = walletRepository.findById(walletId)
+                .orElseThrow(() ->
+                        new WalletNotFoundException(
+                                "Wallet not found with ID: " + walletId));
+
+        checkOwnership(wallet, getCurrentUser());
 
         List<Transaction> transactions =
                 transactionRepository
                         .findBySourceWalletIdOrDestinationWalletIdOrderByCreatedAtDesc(
-                walletId,
-                walletId);
+                                walletId,
+                                walletId);
 
         return transactions.stream()
                 .map(this::convertToDTO)
@@ -142,6 +155,8 @@ public class TransactionServiceImpl implements TransactionService {
                 .orElseThrow(() ->
                         new WalletNotFoundException(
                                 "Wallet not found with ID: " + walletId));
+
+        checkOwnership(wallet, getCurrentUser());
 
         wallet.setBalance(
                 wallet.getBalance().add(request.getAmount()));
@@ -170,7 +185,51 @@ public class TransactionServiceImpl implements TransactionService {
                                         "Transaction not found with ID: "
                                                 + transactionId));
 
+        User currentUser = getCurrentUser();
+
+        boolean isSourceOwner = transaction.getSourceWallet() != null
+                && transaction.getSourceWallet().getUser().getId()
+                .equals(currentUser.getId());
+
+        boolean isDestinationOwner = transaction.getDestinationWallet() != null
+                && transaction.getDestinationWallet().getUser().getId()
+                .equals(currentUser.getId());
+
+        if (currentUser.getRole() != Role.ADMIN
+                && !isSourceOwner
+                && !isDestinationOwner) {
+
+            throw new AccessDeniedException(
+                    "You do not have access to this transaction"
+            );
+        }
+
         return convertToDTO(transaction);
+    }
+
+    private User getCurrentUser() {
+
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new UserNotFoundException("User not found"));
+    }
+
+    private void checkOwnership(Wallet wallet, User user) {
+
+        if (user.getRole() == Role.ADMIN) {
+            return;
+        }
+
+        if (!wallet.getUser().getId().equals(user.getId())) {
+
+            throw new AccessDeniedException(
+                    "You do not have access to this wallet"
+            );
+        }
     }
 
     private TransactionResponse convertToDTO(

@@ -1,8 +1,7 @@
 package com.vois.simpleewalletsystem.config;
-
-import com.vois.simpleewalletsystem.dto.request.UserRequest;
+import com.vois.simpleewalletsystem.dto.generated.UserRequest;
+import com.vois.simpleewalletsystem.dto.generated.Role;
 import com.vois.simpleewalletsystem.entity.User;
-import com.vois.simpleewalletsystem.enums.Role;
 import com.vois.simpleewalletsystem.repository.UserRepository;
 import com.vois.simpleewalletsystem.service.UserService;
 import com.vois.simpleewalletsystem.service.WalletService;
@@ -48,7 +47,7 @@ public class DataSeeder implements CommandLineRunner {
 
             if (userRepository.findByEmail(email).isEmpty()) {
 
-                UserRequest request = UserRequest.builder()
+                UserRequest request = new UserRequest()
                         .fullName(fullName)
                         .email(email)
                         .password("User123")

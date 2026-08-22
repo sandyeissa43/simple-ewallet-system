@@ -1,6 +1,6 @@
 package com.vois.simpleewalletsystem.service;
-import com.vois.simpleewalletsystem.dto.request.UserRequest;
-import com.vois.simpleewalletsystem.dto.response.UserResponse;
+import com.vois.simpleewalletsystem.dto.generated.UserRequest;
+import com.vois.simpleewalletsystem.dto.generated.UserResponse;
 import java.util.List;
 import com.example.model.DepositRequest;
 

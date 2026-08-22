@@ -1,7 +1,8 @@
 package com.vois.simpleewalletsystem.service.impl;
 
-import com.vois.simpleewalletsystem.dto.request.UserRequest;
-import com.vois.simpleewalletsystem.dto.response.UserResponse;
+import com.vois.simpleewalletsystem.dto.generated.UserRequest;
+import com.vois.simpleewalletsystem.dto.generated.UserResponse;
+import com.vois.simpleewalletsystem.enums.Role;
 import com.vois.simpleewalletsystem.entity.User;
 import com.vois.simpleewalletsystem.enums.Role;
 import com.vois.simpleewalletsystem.exception.DuplicateEmailException;
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import com.vois.simpleewalletsystem.service.WalletService;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +47,7 @@ public class UserServiceImpl implements UserService {
                 .fullName(request.getFullName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
+                .role(com.vois.simpleewalletsystem.enums.Role.valueOf(request.getRole().name()))
                 .active(true)
                 .build();
 

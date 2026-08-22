@@ -1,7 +1,8 @@
 package com.vois.simpleewalletsystem.service.impl;
 
-import com.vois.simpleewalletsystem.dto.request.UserRequest;
-import com.vois.simpleewalletsystem.dto.response.UserResponse;
+import com.vois.simpleewalletsystem.dto.generated.Role;
+import com.vois.simpleewalletsystem.dto.generated.UserRequest;
+import com.vois.simpleewalletsystem.dto.generated.UserResponse;
 import com.vois.simpleewalletsystem.entity.User;
 import com.vois.simpleewalletsystem.enums.Role;
 import com.vois.simpleewalletsystem.exception.DuplicateEmailException;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -34,10 +36,10 @@ class UserServiceImplTest {
     private UserMapper userMapper;
 
     @Mock
-    private PasswordEncoder passwordEncoder;
+    private WalletService walletService;
 
     @Mock
-    private WalletService walletService;
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -46,12 +48,11 @@ class UserServiceImplTest {
     @Test
     void shouldCreateUserSuccessfully() {
 
-        UserRequest request = UserRequest.builder()
+        UserRequest request = new UserRequest()
                 .fullName("Sandy Eissa")
                 .email("sandy@gmail.com")
                 .password("12345678")
-                .role(Role.USER)
-                .build();
+                .role(Role.USER);
 
         User savedUser = User.builder()
                 .id(1L)
@@ -62,13 +63,12 @@ class UserServiceImplTest {
                 .active(true)
                 .build();
 
-        UserResponse expectedResponse = UserResponse.builder()
+        UserResponse expectedResponse = new UserResponse()
                 .id(1L)
                 .fullName("Sandy Eissa")
                 .email("sandy@gmail.com")
                 .role(Role.USER)
-                .active(true)
-                .build();
+                .active(true);
 
         when(userRepository.existsByEmail(request.getEmail()))
                 .thenReturn(false);
@@ -82,8 +82,7 @@ class UserServiceImplTest {
         when(userMapper.toResponse(savedUser))
                 .thenReturn(expectedResponse);
 
-        UserResponse actualResponse =
-                userService.createUser(request);
+        UserResponse actualResponse = userService.createUser(request);
 
         assertEquals(expectedResponse.getId(), actualResponse.getId());
         assertEquals(expectedResponse.getFullName(), actualResponse.getFullName());
@@ -102,12 +101,11 @@ class UserServiceImplTest {
     @Test
     void shouldThrowExceptionWhenEmailAlreadyExists() {
 
-        UserRequest request = UserRequest.builder()
+        UserRequest request = new UserRequest()
                 .fullName("Sandy Eissa")
                 .email("sandy@gmail.com")
                 .password("12345678")
-                .role(Role.USER)
-                .build();
+                .role(Role.USER);
 
         when(userRepository.existsByEmail(request.getEmail()))
                 .thenReturn(true);
@@ -118,11 +116,12 @@ class UserServiceImplTest {
         );
 
         verify(userRepository).existsByEmail(request.getEmail());
-
         verify(userRepository, never()).save(any(User.class));
         verifyNoInteractions(passwordEncoder);
         verifyNoInteractions(walletService);
         verifyNoInteractions(userMapper);
+        verifyNoInteractions(walletService);
+        verifyNoInteractions(passwordEncoder);
     }
 
 
@@ -138,7 +137,7 @@ class UserServiceImplTest {
                 .active(true)
                 .build();
 
-        UserResponse expectedResponse = UserResponse.builder()
+        UserResponse expectedResponse = new UserResponse()
                 .id(1L)
                 .fullName("Sandy Eissa")
                 .email("sandy@gmail.com")
@@ -162,7 +161,7 @@ class UserServiceImplTest {
         verify(userMapper).toResponse(user);
     }
 
-
+ main
     @Test
     void shouldThrowExceptionWhenUserNotFound() {
 
@@ -203,11 +202,11 @@ class UserServiceImplTest {
     @Test
     void shouldUpdateUserSuccessfully() {
 
-        UserRequest request = UserRequest.builder()
+        UserRequest request = new UserRequest()
                 .fullName("New Name")
                 .email("new@gmail.com")
                 .password("12345678")
-                .build();
+                .role(Role.USER);
 
         User user = User.builder()
                 .id(1L)
@@ -217,12 +216,11 @@ class UserServiceImplTest {
                 .active(true)
                 .build();
 
-        UserResponse expectedResponse = UserResponse.builder()
+        UserResponse expectedResponse = new UserResponse()
                 .id(1L)
                 .fullName("New Name")
                 .email("new@gmail.com")
-                .active(true)
-                .build();
+                .active(true);
 
         when(userRepository.findById(1L))
                 .thenReturn(Optional.of(user));
@@ -254,12 +252,14 @@ class UserServiceImplTest {
         verify(userMapper).toResponse(user);
     }
 
-
     @Test
     void shouldThrowExceptionWhenUpdatingNonExistingUser() {
 
-        UserRequest request = UserRequest.builder()
-                .build();
+        UserRequest request = new UserRequest()
+                .fullName("New Name")
+                .email("new@gmail.com")
+                .password("12345678")
+                .role(Role.USER);
 
         when(userRepository.findById(1L))
                 .thenReturn(Optional.empty());
@@ -270,6 +270,9 @@ class UserServiceImplTest {
         );
 
         verify(userRepository).findById(1L);
+        verifyNoInteractions(userMapper);
+    }
+
         verifyNoInteractions(passwordEncoder);
     }
 
@@ -277,9 +280,11 @@ class UserServiceImplTest {
     @Test
     void shouldThrowExceptionWhenUpdatingWithExistingEmail() {
 
-        UserRequest request = UserRequest.builder()
+        UserRequest request = new UserRequest()
+                .fullName("New Name")
                 .email("new@gmail.com")
-                .build();
+                .password("12345678")
+                .role(Role.USER);
 
         User user = User.builder()
                 .id(1L)
@@ -300,8 +305,10 @@ class UserServiceImplTest {
 
         verify(userRepository).findById(1L);
         verify(userRepository).existsByEmail("new@gmail.com");
-
         verifyNoInteractions(passwordEncoder);
+        verifyNoInteractions(userMapper);
+    }
+
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -319,7 +326,7 @@ class UserServiceImplTest {
 
         userService.deactivateUser(1L);
 
-        assertEquals(false, user.getActive());
+        assertFalse(user.getActive());
 
         verify(userRepository).findById(1L);
         verify(userRepository).save(user);
@@ -351,11 +358,10 @@ class UserServiceImplTest {
                 .active(true)
                 .build();
 
-        UserResponse response = UserResponse.builder()
+        UserResponse response = new UserResponse()
                 .id(1L)
                 .fullName("Sandy")
-                .active(true)
-                .build();
+                .active(true);
 
         when(userRepository.findByActiveTrue())
                 .thenReturn(List.of(user));
@@ -367,44 +373,43 @@ class UserServiceImplTest {
                 userService.getAllUsers();
 
         assertEquals(1, users.size());
+        assertEquals("Sandy", users.get(0).getFullName());
 
         verify(userRepository).findByActiveTrue();
         verify(userMapper).toResponse(user);
     }
+@Test
+void shouldActivateUserSuccessfully() {
+
+    User user = User.builder()
+            .id(1L)
+            .active(false)
+            .build();
+
+    when(userRepository.findById(1L))
+            .thenReturn(Optional.of(user));
+
+    userService.activateUser(1L);
+
+    assertEquals(true, user.getActive());
+
+    verify(userRepository).findById(1L);
+    verify(userRepository).save(user);
+}
 
 
-    @Test
-    void shouldActivateUserSuccessfully() {
+@Test
+void shouldThrowExceptionWhenActivatingNonExistingUser() {
 
-        User user = User.builder()
-                .id(1L)
-                .active(false)
-                .build();
+    when(userRepository.findById(1L))
+            .thenReturn(Optional.empty());
 
-        when(userRepository.findById(1L))
-                .thenReturn(Optional.of(user));
+    assertThrows(
+            UserNotFoundException.class,
+            () -> userService.activateUser(1L)
+    );
 
-        userService.activateUser(1L);
-
-        assertEquals(true, user.getActive());
-
-        verify(userRepository).findById(1L);
-        verify(userRepository).save(user);
-    }
-
-
-    @Test
-    void shouldThrowExceptionWhenActivatingNonExistingUser() {
-
-        when(userRepository.findById(1L))
-                .thenReturn(Optional.empty());
-
-        assertThrows(
-                UserNotFoundException.class,
-                () -> userService.activateUser(1L)
-        );
-
-        verify(userRepository).findById(1L);
-        verify(userRepository, never()).save(any(User.class));
-    }
+    verify(userRepository).findById(1L);
+    verify(userRepository, never()).save(any(User.class));
+}
 }

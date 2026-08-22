@@ -14,11 +14,11 @@ import com.vois.simpleewalletsystem.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
-import com.vois.simpleewalletsystem.entity.User;
 import org.springframework.transaction.annotation.Transactional;
 import com.vois.simpleewalletsystem.enums.Role;
 import com.vois.simpleewalletsystem.dto.response.WalletBalanceResponse;
 import com.vois.simpleewalletsystem.dto.response.WalletResponse;
+import com.example.model.DepositRequest;
 
 
 import java.math.BigDecimal;
@@ -85,9 +85,9 @@ public class WalletServiceImpl implements WalletService {
 
         checkWalletOwnership(wallet, user);
 
-        wallet.setBalance(
-                wallet.getBalance().add(request.getAmount())
-        );
+        BigDecimal amount = BigDecimal.valueOf(request.getAmount());
+        wallet.setBalance(wallet.getBalance().add(amount));
+
 
         Wallet savedWallet = walletRepository.save(wallet);
 

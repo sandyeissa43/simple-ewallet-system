@@ -112,6 +112,7 @@
         <artifactId>spring-boot-starter-test</artifactId>
         <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
@@ -121,6 +122,7 @@
             <artifactId>jackson-databind-nullable</artifactId>
             <version>0.2.6</version>
         </dependency>
+
     </dependencies>
 
     <build>

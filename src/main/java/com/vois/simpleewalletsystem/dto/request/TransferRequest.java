@@ -9,9 +9,13 @@ import java.math.BigDecimal;
 
 @Getter
 @Setter
-public class DepositRequest {
+public class TransferRequest {
 
     @NotNull(message = "Amount is required")
     @Positive(message = "Amount must be greater than zero")
     private BigDecimal amount;
+
+    @NotNull(message = "Destination wallet ID is required")
+    @Positive(message = "Destination wallet ID must be greater than zero")
+    private Long destinationWalletId;
 }

@@ -1,0 +1,580 @@
+openapi: 3.0.3
+
+info:
+  title: Simple E-Wallet API
+  description: REST API for the Simple E-Wallet System
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local Development Server
+
+tags:
+  - name: Users
+    description: User management APIs
+
+  - name: Wallets
+    description: Wallet operations APIs
+
+  - name: Transactions
+    description: Transaction APIs
+
+paths:
+
+  /users:
+    post:
+      tags:
+        - Users
+      operationId: createUser
+      summary: Create a new user
+      description: Creates a new user with the provided information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid user data
+
+    get:
+      tags:
+        - Users
+      operationId: getAllUsers
+      summary: Get all users
+      description: Retrieves a list of all users
+      responses:
+        '200':
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+
+
+  /users/{id}:
+    get:
+      tags:
+        - Users
+      operationId: getUserById
+      summary: Get user by ID
+      description: Retrieves a user by their unique ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: User not found
+
+    put:
+      tags:
+        - Users
+      operationId: updateUser
+      summary: Update user
+      description: Updates an existing user's information
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid user data
+        '404':
+          description: User not found
+
+
+  /users/{id}/deactivate:
+    patch:
+      tags:
+        - Users
+      operationId: deactivateUser
+      summary: Deactivate user
+      description: Deactivates an active user by their ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: User deactivated successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: User deactivated successfully
+        '404':
+          description: User not found
+
+
+  /wallets/{walletId}:
+    get:
+      tags:
+        - Wallets
+      operationId: getWalletById
+      summary: Get wallet by ID
+      description: Retrieves a wallet by its unique ID
+      parameters:
+        - name: walletId
+          in: path
+          required: true
+          description: Wallet ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Wallet retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+        '404':
+          description: Wallet not found
+
+
+  /wallets/{walletId}/balance:
+    get:
+      tags:
+        - Wallets
+      operationId: getWalletBalance
+      summary: Get wallet balance
+      description: Retrieves the current balance of a wallet
+      parameters:
+        - name: walletId
+          in: path
+          required: true
+          description: Wallet ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Wallet balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletBalanceResponse'
+        '404':
+          description: Wallet not found
+
+
+  # ==================== TRANSACTIONS ====================
+
+  /api/transactions/wallets/{walletId}/deposit:
+    post:
+      tags:
+        - Transactions
+      operationId: deposit
+      summary: Deposit money
+      description: Deposits money into a wallet and creates a transaction record
+      parameters:
+        - name: walletId
+          in: path
+          required: true
+          description: Wallet ID
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepositRequest'
+      responses:
+        '200':
+          description: Money deposited successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '400':
+          description: Invalid deposit data
+        '404':
+          description: Wallet not found
+
+
+  /api/transactions/wallets/{walletId}/withdraw:
+    post:
+      tags:
+        - Transactions
+      operationId: withdraw
+      summary: Withdraw money
+      description: Withdraws money from a wallet
+      parameters:
+        - name: walletId
+          in: path
+          required: true
+          description: Source wallet ID
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawalRequest'
+      responses:
+        '200':
+          description: Money withdrawn successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '400':
+          description: Insufficient balance or invalid withdrawal data
+        '404':
+          description: Wallet not found
+
+
+  /api/transactions/wallets/{walletId}/transfer:
+    post:
+      tags:
+        - Transactions
+      operationId: transfer
+      summary: Transfer money
+      description: Transfers money from one wallet to another
+      parameters:
+        - name: walletId
+          in: path
+          required: true
+          description: Source wallet ID
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+      responses:
+        '200':
+          description: Money transferred successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '400':
+          description: Insufficient balance or invalid transfer data
+        '404':
+          description: Source or destination wallet not found
+
+
+  /api/transactions/wallets/{walletId}/history:
+    get:
+      tags:
+        - Transactions
+      operationId: getTransactionHistory
+      summary: Get transaction history
+      description: Retrieves all transactions associated with a wallet
+      parameters:
+        - name: walletId
+          in: path
+          required: true
+          description: Wallet ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Transaction history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransactionResponse'
+        '404':
+          description: Wallet not found
+
+
+  /api/transactions/{transactionId}:
+    get:
+      tags:
+        - Transactions
+      operationId: getTransactionById
+      summary: Get transaction by ID
+      description: Retrieves a transaction by its unique ID
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          description: Transaction ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Transaction retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '404':
+          description: Transaction not found
+
+
+components:
+  schemas:
+
+    UserRequest:
+      type: object
+      required:
+        - fullName
+        - email
+        - password
+        - role
+      properties:
+        fullName:
+          type: string
+          minLength: 3
+          maxLength: 50
+          example: Sandy Eissa
+          description: User's full name
+
+        email:
+          type: string
+          format: email
+          example: sandy@example.com
+          description: User's email address
+
+        password:
+          type: string
+          minLength: 8
+          maxLength: 20
+          example: Password123
+          description: User's password
+
+        role:
+          $ref: '#/components/schemas/Role'
+
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+
+        fullName:
+          type: string
+          example: Sandy Eissa
+
+        email:
+          type: string
+          format: email
+          example: sandy@example.com
+
+        role:
+          $ref: '#/components/schemas/Role'
+
+        active:
+          type: boolean
+          example: true
+
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-08-17T10:30:00'
+
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2026-08-17T10:30:00'
+
+
+    Role:
+      type: string
+      enum:
+        - USER
+        - ADMIN
+
+
+    WalletResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+
+        balance:
+          type: number
+          format: double
+          example: 1000.00
+
+        version:
+          type: integer
+          format: int64
+          example: 0
+
+        userId:
+          type: integer
+          format: int64
+          example: 1
+
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-08-17T10:30:00'
+
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2026-08-17T10:30:00'
+
+
+    WalletBalanceResponse:
+      type: object
+      properties:
+        walletId:
+          type: integer
+          format: int64
+          example: 1
+
+        balance:
+          type: number
+          format: double
+          example: 1000.00
+
+
+    DepositRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          example: 500.00
+          description: Amount to deposit
+
+
+    WithdrawalRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          example: 200.00
+          description: Amount to withdraw
+
+
+    TransferRequest:
+      type: object
+      required:
+        - amount
+        - destinationWalletId
+      properties:
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          example: 300.00
+          description: Amount to transfer
+
+        destinationWalletId:
+          type: integer
+          format: int64
+          example: 2
+          description: Destination wallet ID
+
+
+    TransactionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+
+        amount:
+          type: number
+          format: double
+          example: 500.00
+
+        type:
+          $ref: '#/components/schemas/TransactionType'
+
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-08-21T10:30:00'
+
+        sourceWalletId:
+          type: integer
+          format: int64
+          nullable: true
+          example: 1
+
+        destinationWalletId:
+          type: integer
+          format: int64
+          nullable: true
+          example: 2
+
+
+    TransactionType:
+      type: string
+      enum:
+        - DEPOSIT
+        - WITHDRAW
+        - TRANSFER
+
+
+    TransactionStatus:
+      type: string
+      enum:
+        - PENDING
+        - SUCCESS
+        - FAILED

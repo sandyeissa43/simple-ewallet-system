@@ -2,22 +2,21 @@ package com.vois.simpleewalletsystem.service.impl;
 
 import com.vois.simpleewalletsystem.dto.request.UserRequest;
 import com.vois.simpleewalletsystem.dto.response.UserResponse;
-import com.vois.simpleewalletsystem.enums.Role;
 import com.vois.simpleewalletsystem.entity.User;
+import com.vois.simpleewalletsystem.enums.Role;
 import com.vois.simpleewalletsystem.exception.DuplicateEmailException;
 import com.vois.simpleewalletsystem.exception.UserNotFoundException;
 import com.vois.simpleewalletsystem.mapper.UserMapper;
 import com.vois.simpleewalletsystem.repository.UserRepository;
 import com.vois.simpleewalletsystem.service.UserService;
+import com.vois.simpleewalletsystem.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import com.vois.simpleewalletsystem.service.WalletService;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 @RequiredArgsConstructor
@@ -28,12 +27,10 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final WalletService walletService;
-    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
     public UserResponse createUser(UserRequest request) {
-
 
         log.info("Creating user with email {}", request.getEmail());
 
@@ -46,11 +43,12 @@ public class UserServiceImpl implements UserService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.USER)
+                .active(true)
                 .build();
 
         User savedUser = userRepository.save(user);
-        walletService.createWallet(savedUser);
 
+        walletService.createWallet(savedUser);
 
         log.info("User created successfully with id {}", savedUser.getId());
 
@@ -86,7 +84,14 @@ public class UserServiceImpl implements UserService {
 
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        if (request.getPassword() != null
+                && !request.getPassword().isBlank()) {
+
+            user.setPassword(
+                    passwordEncoder.encode(request.getPassword())
+            );
+        }
 
         User updatedUser = userRepository.save(user);
 
@@ -120,12 +125,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void activateUser(Long id) {
+
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+                .orElseThrow(() ->
+                        new UserNotFoundException("User not found with id: " + id));
 
         user.setActive(true);
 
         userRepository.save(user);
+
+        log.info("User activated successfully with id {}", id);
     }
 }
-

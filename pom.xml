@@ -116,6 +116,11 @@
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.openapitools</groupId>
+            <artifactId>jackson-databind-nullable</artifactId>
+            <version>0.2.6</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -140,7 +145,7 @@
                             <generatorName>spring</generatorName>
 
                             <inputSpec>
-                                ${project.basedir}/src/main/resources/openapi.yaml
+                                ${project.basedir}/docs/openapi.yaml
                             </inputSpec>
 
                             <output>
@@ -154,6 +159,8 @@
                                 <interfaceOnly>true</interfaceOnly>
                                 <useSpringBoot3>true</useSpringBoot3>
                                 <dateLibrary>java8</dateLibrary>
+                                <useTags>true</useTags>
+
                             </configOptions>
                         </configuration>
                     </execution>

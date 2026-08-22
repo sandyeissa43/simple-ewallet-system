@@ -56,7 +56,9 @@ public class DataSeeder implements CommandLineRunner {
                         .build();
 
                 userService.createUser(request);
+                System.out.println("Finished creating " + email);
             }
         }
+        System.out.println("===== DATA SEEDER FINISHED =====");
     }
 }

@@ -1,8 +1,10 @@
 package com.vois.simpleewalletsystem.service;
 
+import com.example.model.DepositRequest;
 import com.vois.simpleewalletsystem.dto.response.WalletBalanceResponse;
 import com.vois.simpleewalletsystem.dto.response.WalletResponse;
 import com.vois.simpleewalletsystem.entity.User;
+import jakarta.validation.Valid;
 
 public interface WalletService {
 
@@ -14,7 +16,7 @@ public interface WalletService {
 
     WalletResponse deposit(
             Long walletId,
-            DepositRequest request,
+            @Valid DepositRequest request,
             String userEmail
     );
 }

@@ -6,6 +6,7 @@ import com.vois.simpleewalletsystem.entity.User;
 import com.vois.simpleewalletsystem.entity.Wallet;
 import com.vois.simpleewalletsystem.exception.WalletNotFoundException;
 import com.vois.simpleewalletsystem.mapper.WalletMapper;
+import com.vois.simpleewalletsystem.repository.UserRepository;
 import com.vois.simpleewalletsystem.repository.WalletRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +27,9 @@ class WalletServiceImplTest {
     private WalletRepository walletRepository;
 
     @Mock
+    private UserRepository userRepository;
+
+    @Mock
     private WalletMapper walletMapper;
 
     @InjectMocks
@@ -33,68 +37,138 @@ class WalletServiceImplTest {
 
     @Test
     void shouldGetWalletByIdSuccessfully() {
+
+        User user = User.builder()
+                .id(2L)
+                .email("test@example.com")
+                .build();
+
         Wallet wallet = Wallet.builder()
                 .id(1L)
                 .balance(BigDecimal.valueOf(100))
-                .user(User.builder().id(2L).build())
+                .user(user)
                 .build();
 
-        WalletResponse expectedResponse = WalletResponse.builder()
-                .id(1L)
-                .balance(BigDecimal.valueOf(100))
-                .userId(2L)
-                .build();
+        WalletResponse expectedResponse = mock(WalletResponse.class);
 
-        when(walletRepository.findById(1L)).thenReturn(Optional.of(wallet));
-        when(walletMapper.toResponse(wallet)).thenReturn(expectedResponse);
+        when(expectedResponse.getId())
+                .thenReturn(1L);
 
-        WalletResponse actualResponse = walletService.getWalletById(1L);
+        when(expectedResponse.getBalance())
+                .thenReturn(BigDecimal.valueOf(100));
 
-        assertEquals(expectedResponse.getId(), actualResponse.getId());
-        assertEquals(expectedResponse.getBalance(), actualResponse.getBalance());
+        when(userRepository.findByEmail("test@example.com"))
+                .thenReturn(Optional.of(user));
 
-        verify(walletRepository).findById(1L);
-        verify(walletMapper).toResponse(wallet);
-    }
+        when(walletRepository.findById(1L))
+                .thenReturn(Optional.of(wallet));
 
-    @Test
-    void shouldThrowExceptionWhenWalletNotFound() {
-        when(walletRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(
-                WalletNotFoundException.class,
-                () -> walletService.getWalletById(99L)
-        );
-
-        verify(walletRepository).findById(99L);
-        verifyNoInteractions(walletMapper);
-    }
-
-    @Test
-    void shouldGetWalletBalanceSuccessfully() {
-        Wallet wallet = Wallet.builder()
-                .id(1L)
-                .balance(BigDecimal.valueOf(250))
-                .build();
-
-        WalletBalanceResponse expectedResponse = WalletBalanceResponse.builder()
-                .walletId(1L)
-                .balance(BigDecimal.valueOf(250))
-                .build();
-
-        when(walletRepository.findById(1L)).thenReturn(Optional.of(wallet));
-        when(walletMapper.toBalanceResponse(wallet))
+        when(walletMapper.toResponse(wallet))
                 .thenReturn(expectedResponse);
 
-        WalletBalanceResponse actualResponse =
-                walletService.getWalletBalance(1L);
+        WalletResponse actualResponse =
+                walletService.getWalletById(
+                        1L,
+                        "test@example.com"
+                );
+
+        assertEquals(
+                expectedResponse.getId(),
+                actualResponse.getId()
+        );
 
         assertEquals(
                 expectedResponse.getBalance(),
                 actualResponse.getBalance()
         );
 
-        verify(walletRepository).findById(1L);
-        verify(walletMapper).toBalanceResponse(wallet);
+        verify(userRepository)
+                .findByEmail("test@example.com");
+
+        verify(walletRepository)
+                .findById(1L);
+
+        verify(walletMapper)
+                .toResponse(wallet);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenWalletNotFound() {
+
+        when(walletRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                WalletNotFoundException.class,
+                () -> walletService.getWalletById(
+                        99L,
+                        "test@example.com"
+                )
+        );
+
+        verify(walletRepository)
+                .findById(99L);
+
+        verifyNoInteractions(userRepository);
+        verifyNoInteractions(walletMapper);
+    }
+
+
+    @Test
+    void shouldGetWalletBalanceSuccessfully() {
+
+        User user = User.builder()
+                .id(2L)
+                .email("test@example.com")
+                .build();
+
+        Wallet wallet = Wallet.builder()
+                .id(1L)
+                .balance(BigDecimal.valueOf(250))
+                .user(user)
+                .build();
+
+        WalletBalanceResponse expectedResponse =
+                mock(WalletBalanceResponse.class);
+
+        when(expectedResponse.getWalletId())
+                .thenReturn(1L);
+
+        when(expectedResponse.getBalance())
+                .thenReturn(BigDecimal.valueOf(250));
+
+        when(userRepository.findByEmail("test@example.com"))
+                .thenReturn(Optional.of(user));
+
+        when(walletRepository.findById(1L))
+                .thenReturn(Optional.of(wallet));
+
+        when(walletMapper.toBalanceResponse(wallet))
+                .thenReturn(expectedResponse);
+
+        WalletBalanceResponse actualResponse =
+                walletService.getWalletBalance(
+                        1L,
+                        "test@example.com"
+                );
+
+        assertEquals(
+                expectedResponse.getWalletId(),
+                actualResponse.getWalletId()
+        );
+
+        assertEquals(
+                expectedResponse.getBalance(),
+                actualResponse.getBalance()
+        );
+
+        verify(userRepository)
+                .findByEmail("test@example.com");
+
+        verify(walletRepository)
+                .findById(1L);
+
+        verify(walletMapper)
+                .toBalanceResponse(wallet);
     }
 }

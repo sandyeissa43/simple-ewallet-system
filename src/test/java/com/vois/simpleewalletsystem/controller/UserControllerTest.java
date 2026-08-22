@@ -1,9 +1,11 @@
 package com.vois.simpleewalletsystem.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vois.simpleewalletsystem.dto.request.UserRequest;
-import com.vois.simpleewalletsystem.dto.response.UserResponse;
-import com.vois.simpleewalletsystem.enums.Role;
+import com.vois.simpleewalletsystem.dto.generated.UserRequest;
+import com.vois.simpleewalletsystem.dto.generated.UserResponse;
+import com.vois.simpleewalletsystem.dto.generated.Role;
+import com.vois.simpleewalletsystem.security.jwt.JwtService;
+
 import com.vois.simpleewalletsystem.security.jwt.JwtAuthenticationFilter;
 import com.vois.simpleewalletsystem.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -22,13 +24,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import org.springframework.context.annotation.Import;
-@WebMvcTest(controllers = UserController.class)
+import com.vois.simpleewalletsystem.security.jwt.JwtAuthenticationFilter;
+@WebMvcTest(UserController.class)
 @AutoConfigureMockMvc(addFilters = false)
-
-@Import(UserController.class)
-
 class UserControllerTest {
 
     @Autowired
@@ -37,8 +37,11 @@ class UserControllerTest {
     @MockitoBean
     private UserService userService;
 
+
     @MockitoBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+      private JwtService jwtService;
+    @MockitoBean
+      private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private final
     ObjectMapper objectMapper = new ObjectMapper();
@@ -46,20 +49,18 @@ class UserControllerTest {
     @Test
     void shouldCreateUserSuccessfully() throws Exception {
 
-        UserRequest request = UserRequest.builder()
+        UserRequest request = new UserRequest()
                 .fullName("Sandy")
                 .email("sandy@gmail.com")
                 .password("12345678")
-                .role(Role.USER)
-                .build();
+                .role(Role.USER);
 
-        UserResponse response = UserResponse.builder()
+        UserResponse response = new UserResponse()
                 .id(1L)
                 .fullName("Sandy")
                 .email("sandy@gmail.com")
                 .role(Role.USER)
-                .active(true)
-                .build();
+                .active(true);
 
         when(userService.createUser(any(UserRequest.class)))
                 .thenReturn(response);
@@ -74,18 +75,18 @@ class UserControllerTest {
     @Test
     void shouldGetUserByIdSuccessfully() throws Exception {
 
-        UserResponse response = UserResponse.builder()
+        UserResponse response = new UserResponse()
                 .id(1L)
                 .fullName("Sandy")
                 .email("sandy@gmail.com")
                 .role(Role.USER)
-                .active(true)
-                .build();
+                .active(true);
 
         when(userService.getUserById(1L))
                 .thenReturn(response);
 
         mockMvc.perform(get("/users/1"))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.email").value("sandy@gmail.com"));
@@ -93,11 +94,10 @@ class UserControllerTest {
     @Test
     void shouldReturnAllUsers() throws Exception {
 
-        UserResponse response = UserResponse.builder()
+        UserResponse response = new UserResponse()
                 .id(1L)
                 .fullName("Sandy")
-                .email("sandy@gmail.com")
-                .build();
+                .email("sandy@gmail.com");
 
         when(userService.getAllUsers())
                 .thenReturn(List.of(response));
@@ -109,18 +109,16 @@ class UserControllerTest {
     }
     @Test
     void shouldUpdateUserSuccessfully() throws Exception {
-        UserRequest request = UserRequest.builder()
+        UserRequest request = new UserRequest()
                 .fullName("Updated")
                 .email("updated@gmail.com")
                 .password("12345678")
-                .role(Role.USER)
-                .build();
+                .role(Role.USER);
 
-        UserResponse response = UserResponse.builder()
+        UserResponse response = new UserResponse()
                 .id(1L)
                 .fullName("Updated")
-                .email("updated@gmail.com")
-                .build();
+                .email("updated@gmail.com");
 
         when(userService.updateUser(any(Long.class), any(UserRequest.class)))
                 .thenReturn(response);

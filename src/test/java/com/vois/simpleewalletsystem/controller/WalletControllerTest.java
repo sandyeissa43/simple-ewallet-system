@@ -1,8 +1,11 @@
 package com.vois.simpleewalletsystem.controller;
 
-import com.vois.simpleewalletsystem.dto.response.WalletBalanceResponse;
-import com.vois.simpleewalletsystem.dto.response.WalletResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vois.simpleewalletsystem.dto.generated.DepositRequest;
+import com.vois.simpleewalletsystem.dto.generated.WalletBalanceResponse;
+import com.vois.simpleewalletsystem.dto.generated.WalletResponse;
 import com.vois.simpleewalletsystem.security.jwt.JwtAuthenticationFilter;
+import com.vois.simpleewalletsystem.security.jwt.JwtService;
 import com.vois.simpleewalletsystem.service.WalletService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,12 +15,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = WalletController.class)
+@WebMvcTest(WalletController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class WalletControllerTest {
 
@@ -28,17 +35,25 @@ class WalletControllerTest {
     private WalletService walletService;
 
     @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     void shouldGetWalletSuccessfully() throws Exception {
 
-        Authentication authentication = mock(Authentication.class);
+        WalletResponse response = new WalletResponse()
+                .id(1L)
+                .balance(BigDecimal.valueOf(100))
+                .userId(2L);
 
-        when(authentication.getName())
-                .thenReturn("test@example.com");
-
-        WalletResponse response = mock(WalletResponse.class);
+         when(walletService.getWalletById(
+            1L,
+            "test@example.com"))
+            .thenReturn(response);
 
         when(response.getId())
                 .thenReturn(1L);
@@ -62,30 +77,87 @@ class WalletControllerTest {
 
     @Test
     void shouldGetWalletBalanceSuccessfully() throws Exception {
+@Test
+void shouldGetWalletBalanceSuccessfully() throws Exception {
 
-        Authentication authentication = mock(Authentication.class);
+    Authentication authentication = mock(Authentication.class);
 
-        when(authentication.getName())
-                .thenReturn("test@example.com");
+    when(authentication.getName())
+            .thenReturn("test@example.com");
 
-        WalletBalanceResponse response = mock(WalletBalanceResponse.class);
+    WalletBalanceResponse response = new WalletBalanceResponse()
+            .walletId(1L)
+            .balance(BigDecimal.valueOf(250));
 
-        when(response.getWalletId())
-                .thenReturn(1L);
+    when(walletService.getWalletBalance(
+            1L,
+            "test@example.com"))
+            .thenReturn(response);
 
-        when(response.getBalance())
-                .thenReturn(java.math.BigDecimal.valueOf(250));
+    mockMvc.perform(
+                    get("/wallets/1/balance")
+                            .principal(authentication)
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.walletId").value(1))
+            .andExpect(jsonPath("$.balance").value(250));
+}
 
-        when(walletService.getWalletBalance(
-                1L,
-                "test@example.com"
-        )).thenReturn(response);
+@Test
+void shouldDepositSuccessfully() throws Exception {
 
-        mockMvc.perform(
-                        get("/wallets/1/balance")
-                                .principal(authentication)
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.balance").value(250));
+    Authentication authentication = mock(Authentication.class);
+
+    when(authentication.getName())
+            .thenReturn("test@example.com");
+
+    DepositRequest request = new DepositRequest()
+            .amount(BigDecimal.valueOf(50));
+
+    WalletResponse response = new WalletResponse()
+            .id(1L)
+            .balance(BigDecimal.valueOf(150))
+            .userId(2L);
+
+    when(walletService.deposit(
+            eq(1L),
+            any(DepositRequest.class),
+            eq("test@example.com")))
+            .thenReturn(response);
+
+    mockMvc.perform(
+                    post("/wallets/1/deposit")
+                            .principal(authentication)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(
+                                    objectMapper.writeValueAsString(request)
+                            )
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.balance").value(150));
+}
+
+@Test
+void shouldReturnBadRequestWhenDepositAmountIsNegative()
+        throws Exception {
+
+    Authentication authentication = mock(Authentication.class);
+
+    when(authentication.getName())
+            .thenReturn("test@example.com");
+
+    DepositRequest request = new DepositRequest()
+            .amount(BigDecimal.valueOf(-50));
+
+    mockMvc.perform(
+                    post("/wallets/1/deposit")
+                            .principal(authentication)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(
+                                    objectMapper.writeValueAsString(request)
+                            )
+            )
+            .andExpect(status().isBadRequest());
+}
     }
 }

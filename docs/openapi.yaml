@@ -118,7 +118,6 @@ paths:
         '404':
           description: User not found
 
-
   /users/{id}/deactivate:
     patch:
       tags:
@@ -145,7 +144,6 @@ paths:
         '404':
           description: User not found
 
-
   /wallets/{walletId}:
     get:
       tags:
@@ -170,7 +168,6 @@ paths:
                 $ref: '#/components/schemas/WalletResponse'
         '404':
           description: Wallet not found
-
 
   /wallets/{walletId}/balance:
     get:
@@ -424,14 +421,11 @@ components:
           type: string
           format: date-time
           example: '2026-08-17T10:30:00'
-
-
     Role:
       type: string
       enum:
         - USER
         - ADMIN
-
 
     WalletResponse:
       type: object
@@ -466,7 +460,6 @@ components:
           format: date-time
           example: '2026-08-17T10:30:00'
 
-
     WalletBalanceResponse:
       type: object
       properties:
@@ -479,7 +472,6 @@ components:
           type: number
           format: double
           example: 1000.00
-
 
     DepositRequest:
       type: object

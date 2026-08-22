@@ -1,8 +1,8 @@
 package com.vois.simpleewalletsystem.service.impl;
 
-import com.vois.simpleewalletsystem.dto.request.DepositRequest;
-import com.vois.simpleewalletsystem.dto.response.WalletBalanceResponse;
-import com.vois.simpleewalletsystem.dto.response.WalletResponse;
+import com.vois.simpleewalletsystem.dto.generated.DepositRequest;
+import com.vois.simpleewalletsystem.dto.generated.WalletBalanceResponse;
+import com.vois.simpleewalletsystem.dto.generated.WalletResponse;
 import com.vois.simpleewalletsystem.entity.User;
 import com.vois.simpleewalletsystem.entity.Wallet;
 import com.vois.simpleewalletsystem.exception.UserNotFoundException;

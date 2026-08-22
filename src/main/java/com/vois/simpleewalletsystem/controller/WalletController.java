@@ -1,11 +1,11 @@
 package com.vois.simpleewalletsystem.controller;
 
-import com.vois.simpleewalletsystem.dto.request.DepositRequest;
-import com.vois.simpleewalletsystem.dto.response.WalletBalanceResponse;
-import com.vois.simpleewalletsystem.dto.response.WalletResponse;
+import com.vois.simpleewalletsystem.dto.generated.DepositRequest;
+import com.vois.simpleewalletsystem.dto.generated.WalletBalanceResponse;
+import com.vois.simpleewalletsystem.dto.generated.WalletResponse;
 import com.vois.simpleewalletsystem.service.WalletService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -14,10 +14,10 @@ import com.example.model.DepositRequest;
 import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/wallets")
+@RequiredArgsConstructor
 public class WalletController {
 
-    @Autowired
-    private WalletService walletService;
+    private final WalletService walletService;
 
     @GetMapping("/{walletId}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")

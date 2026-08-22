@@ -1,7 +1,7 @@
 package com.vois.simpleewalletsystem.security.controller;
 
-import com.vois.simpleewalletsystem.dto.request.UserRequest;
-import com.vois.simpleewalletsystem.dto.response.UserResponse;
+import com.vois.simpleewalletsystem.dto.generated.UserRequest;
+import com.vois.simpleewalletsystem.dto.generated.UserResponse;
 import com.vois.simpleewalletsystem.security.dto.LoginRequest;
 import com.vois.simpleewalletsystem.security.dto.LoginResponse;
 import com.vois.simpleewalletsystem.security.service.AuthService;

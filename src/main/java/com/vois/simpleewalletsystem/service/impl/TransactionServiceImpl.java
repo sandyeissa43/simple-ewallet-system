@@ -13,6 +13,7 @@ import com.vois.simpleewalletsystem.enums.TransactionType;
 import com.vois.simpleewalletsystem.exception.InsufficientBalanceException;
 import com.vois.simpleewalletsystem.exception.InvalidTransactionException;
 import com.vois.simpleewalletsystem.exception.TransactionNotFoundException;
+import com.vois.simpleewalletsystem.exception.UserNotFoundException;
 import com.vois.simpleewalletsystem.exception.WalletNotFoundException;
 import com.vois.simpleewalletsystem.repository.TransactionRepository;
 import com.vois.simpleewalletsystem.repository.UserRepository;
@@ -42,6 +43,8 @@ public class TransactionServiceImpl implements TransactionService {
             WithdrawalRequest request) {
 
         Wallet wallet = getAuthorizedWallet(walletId);
+
+        checkOwnership(wallet, getCurrentUser());
 
         if (wallet.getBalance().compareTo(request.getAmount()) < 0) {
             throw new InsufficientBalanceException(
@@ -74,19 +77,15 @@ public class TransactionServiceImpl implements TransactionService {
             TransferRequest request) {
 
 
-        Wallet sourceWallet = getAuthorizedWallet(walletId);
+        checkOwnership(sourceWallet, getCurrentUser());
 
-
-        Wallet destinationWallet =
-                walletRepository.findById(
-                                request.getDestinationWalletId())
-                        .orElseThrow(() ->
-                                new WalletNotFoundException(
-                                        "Destination wallet not found with ID: "
-                                                + request.getDestinationWalletId()
-                                )
-                        );
-
+        Wallet destinationWallet = walletRepository.findById(
+                        request.getDestinationWalletId())
+                .orElseThrow(() ->
+                        new WalletNotFoundException(
+                                "Destination wallet not found with ID: "
+                                        + request.getDestinationWalletId()));
+       
         if (sourceWallet.getId().equals(destinationWallet.getId())) {
             throw new InvalidTransactionException(
                     "Source and destination wallets must be different"
@@ -132,16 +131,15 @@ public class TransactionServiceImpl implements TransactionService {
     public List<TransactionResponse> getTransactionHistory(
             Long walletId) {
 
-
         getAuthorizedWallet(walletId);
 
         List<Transaction> transactions =
                 transactionRepository
                         .findBySourceWalletIdOrDestinationWalletIdOrderByCreatedAtDesc(
                                 walletId,
+
                                 walletId
                         );
-
         return transactions.stream()
                 .map(this::convertToDTO)
                 .toList();
@@ -157,6 +155,8 @@ public class TransactionServiceImpl implements TransactionService {
          * User can only deposit into their own wallet.
          */
         Wallet wallet = getAuthorizedWallet(walletId);
+
+        checkOwnership(wallet, getCurrentUser());
 
         wallet.setBalance(
                 wallet.getBalance().add(request.getAmount())
@@ -209,6 +209,25 @@ public class TransactionServiceImpl implements TransactionService {
 
             throw new AccessDeniedException(
                     "You are not authorized to access this transaction"
+            );
+        }
+
+        User currentUser = getCurrentUser();
+
+        boolean isSourceOwner = transaction.getSourceWallet() != null
+                && transaction.getSourceWallet().getUser().getId()
+                .equals(currentUser.getId());
+
+        boolean isDestinationOwner = transaction.getDestinationWallet() != null
+                && transaction.getDestinationWallet().getUser().getId()
+                .equals(currentUser.getId());
+
+        if (currentUser.getRole() != Role.ADMIN
+                && !isSourceOwner
+                && !isDestinationOwner) {
+
+            throw new AccessDeniedException(
+                    "You do not have access to this transaction"
             );
         }
 

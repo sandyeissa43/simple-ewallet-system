@@ -1,5 +1,6 @@
 package com.vois.simpleewalletsystem.service.impl;
 
+import com.vois.simpleewalletsystem.dto.request.DepositRequest;
 import com.vois.simpleewalletsystem.dto.response.WalletBalanceResponse;
 import com.vois.simpleewalletsystem.dto.response.WalletResponse;
 import com.vois.simpleewalletsystem.entity.User;
@@ -15,7 +16,10 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.vois.simpleewalletsystem.enums.Role;
+import com.vois.simpleewalletsystem.dto.response.WalletBalanceResponse;
+import com.vois.simpleewalletsystem.dto.response.WalletResponse;
 import com.example.model.DepositRequest;
+
 
 import java.math.BigDecimal;
 

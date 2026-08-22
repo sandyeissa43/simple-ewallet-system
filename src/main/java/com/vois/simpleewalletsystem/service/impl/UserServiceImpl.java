@@ -12,6 +12,8 @@ import com.vois.simpleewalletsystem.service.UserService;
 import com.vois.simpleewalletsystem.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,6 +68,8 @@ public class UserServiceImpl implements UserService {
             throw new UserNotFoundException("User is deactivated");
         }
 
+        checkOwnership(user, getCurrentUser());
+
         return userMapper.toResponse(user);
     }
 
@@ -75,6 +79,8 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
                         new UserNotFoundException("User not found with id: " + id));
+
+        checkOwnership(user, getCurrentUser());
 
         if (!user.getEmail().equals(request.getEmail())
                 && userRepository.existsByEmail(request.getEmail())) {
@@ -135,5 +141,30 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         log.info("User activated successfully with id {}", id);
+    }
+
+    private User getCurrentUser() {
+
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new UserNotFoundException("User not found"));
+    }
+
+    private void checkOwnership(User target, User caller) {
+
+        if (caller.getRole() == Role.ADMIN) {
+            return;
+        }
+
+        if (!target.getId().equals(caller.getId())) {
+
+            throw new AccessDeniedException(
+                    "You do not have access to this user's data"
+            );
+        }
     }
 }

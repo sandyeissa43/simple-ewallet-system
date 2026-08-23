@@ -23,23 +23,7 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     public void run(String @NonNull ... args) {
 
-        // Create ADMIN
-        if (userRepository.findByEmail("admin@gmail.com").isEmpty()) {
-
-            User admin = User.builder()
-                    .fullName("Admin")
-                    .email("admin@gmail.com")
-                    .password(passwordEncoder.encode("Admin123"))
-                    .role(Role.ADMIN)
-                    .active(true)
-                    .build();
-
-            User savedAdmin = userRepository.save(admin);
-
-            walletService.createWallet(savedAdmin);
-        }
-
-        // Create 50 normal USERS
+        // Create 50 normal USERS first, so their IDs line up 1-to-1 with their number
         for (int i = 1; i <= 50; i++) {
 
             String email = "user" + i + "@gmail.com";
@@ -51,13 +35,29 @@ public class DataSeeder implements CommandLineRunner {
                         .fullName(fullName)
                         .email(email)
                         .password("User123")
-                        .role(Role.USER)
-                        .build();
+                        .role(Role.USER);
 
                 userService.createUser(request);
                 System.out.println("Finished creating " + email);
             }
         }
+
+        // Create ADMIN last, so it doesn't take id 1 away from user1
+        if (userRepository.findByEmail("admin@gmail.com").isEmpty()) {
+
+            User admin = User.builder()
+                    .fullName("Admin")
+                    .email("admin@gmail.com")
+                    .password(passwordEncoder.encode("Admin123"))
+                    .role(com.vois.simpleewalletsystem.enums.Role.ADMIN)
+                    .active(true)
+                    .build();
+
+            User savedAdmin = userRepository.save(admin);
+
+            walletService.createWallet(savedAdmin);
+        }
+
         System.out.println("===== DATA SEEDER FINISHED =====");
     }
 }

@@ -1,20 +1,22 @@
 package com.vois.simpleewalletsystem.service.impl;
 
-import com.vois.simpleewalletsystem.dto.generated.Role;
 import com.vois.simpleewalletsystem.dto.generated.UserRequest;
 import com.vois.simpleewalletsystem.dto.generated.UserResponse;
 import com.vois.simpleewalletsystem.entity.User;
-import com.vois.simpleewalletsystem.enums.Role;
 import com.vois.simpleewalletsystem.exception.DuplicateEmailException;
 import com.vois.simpleewalletsystem.exception.UserNotFoundException;
 import com.vois.simpleewalletsystem.mapper.UserMapper;
 import com.vois.simpleewalletsystem.repository.UserRepository;
 import com.vois.simpleewalletsystem.service.WalletService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
@@ -45,6 +47,31 @@ class UserServiceImplTest {
     private UserServiceImpl userService;
 
 
+    @BeforeEach
+    void setUp() {
+        SecurityContextHolder.clearContext();
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
+
+    private void setUpSecurityContext(String email) {
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        email,
+                        null,
+                        List.of()
+                );
+
+        SecurityContextHolder.getContext()
+                .setAuthentication(authentication);
+    }
+
+
     @Test
     void shouldCreateUserSuccessfully() {
 
@@ -52,14 +79,14 @@ class UserServiceImplTest {
                 .fullName("Sandy Eissa")
                 .email("sandy@gmail.com")
                 .password("12345678")
-                .role(Role.USER);
+                .role(com.vois.simpleewalletsystem.dto.generated.Role.USER);
 
         User savedUser = User.builder()
                 .id(1L)
                 .fullName("Sandy Eissa")
                 .email("sandy@gmail.com")
                 .password("encodedPassword")
-                .role(Role.USER)
+                .role(com.vois.simpleewalletsystem.enums.Role.USER)
                 .active(true)
                 .build();
 
@@ -67,7 +94,7 @@ class UserServiceImplTest {
                 .id(1L)
                 .fullName("Sandy Eissa")
                 .email("sandy@gmail.com")
-                .role(Role.USER)
+                .role(com.vois.simpleewalletsystem.dto.generated.Role.USER)
                 .active(true);
 
         when(userRepository.existsByEmail(request.getEmail()))
@@ -82,19 +109,48 @@ class UserServiceImplTest {
         when(userMapper.toResponse(savedUser))
                 .thenReturn(expectedResponse);
 
-        UserResponse actualResponse = userService.createUser(request);
+        UserResponse actualResponse =
+                userService.createUser(request);
 
-        assertEquals(expectedResponse.getId(), actualResponse.getId());
-        assertEquals(expectedResponse.getFullName(), actualResponse.getFullName());
-        assertEquals(expectedResponse.getEmail(), actualResponse.getEmail());
-        assertEquals(expectedResponse.getRole(), actualResponse.getRole());
-        assertEquals(expectedResponse.getActive(), actualResponse.getActive());
+        assertEquals(
+                expectedResponse.getId(),
+                actualResponse.getId()
+        );
 
-        verify(userRepository).existsByEmail(request.getEmail());
-        verify(passwordEncoder).encode(request.getPassword());
-        verify(userRepository).save(any(User.class));
-        verify(walletService).createWallet(savedUser);
-        verify(userMapper).toResponse(savedUser);
+        assertEquals(
+                expectedResponse.getFullName(),
+                actualResponse.getFullName()
+        );
+
+        assertEquals(
+                expectedResponse.getEmail(),
+                actualResponse.getEmail()
+        );
+
+        assertEquals(
+                expectedResponse.getRole(),
+                actualResponse.getRole()
+        );
+
+        assertEquals(
+                expectedResponse.getActive(),
+                actualResponse.getActive()
+        );
+
+        verify(userRepository)
+                .existsByEmail(request.getEmail());
+
+        verify(passwordEncoder)
+                .encode(request.getPassword());
+
+        verify(userRepository)
+                .save(any(User.class));
+
+        verify(walletService)
+                .createWallet(savedUser);
+
+        verify(userMapper)
+                .toResponse(savedUser);
     }
 
 
@@ -105,7 +161,7 @@ class UserServiceImplTest {
                 .fullName("Sandy Eissa")
                 .email("sandy@gmail.com")
                 .password("12345678")
-                .role(Role.USER);
+                .role(com.vois.simpleewalletsystem.dto.generated.Role.USER);
 
         when(userRepository.existsByEmail(request.getEmail()))
                 .thenReturn(true);
@@ -115,25 +171,36 @@ class UserServiceImplTest {
                 () -> userService.createUser(request)
         );
 
-        verify(userRepository).existsByEmail(request.getEmail());
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository)
+                .existsByEmail(request.getEmail());
+
+        verify(userRepository, never())
+                .save(any(User.class));
+
         verifyNoInteractions(passwordEncoder);
         verifyNoInteractions(walletService);
         verifyNoInteractions(userMapper);
-        verifyNoInteractions(walletService);
-        verifyNoInteractions(passwordEncoder);
     }
 
 
     @Test
     void shouldGetUserByIdSuccessfully() {
 
+        setUpSecurityContext("sandy@gmail.com");
+
         User user = User.builder()
                 .id(1L)
                 .fullName("Sandy Eissa")
                 .email("sandy@gmail.com")
                 .password("encodedPassword")
-                .role(Role.USER)
+                .role(com.vois.simpleewalletsystem.enums.Role.USER)
+                .active(true)
+                .build();
+
+        User currentUser = User.builder()
+                .id(1L)
+                .email("sandy@gmail.com")
+                .role(com.vois.simpleewalletsystem.enums.Role.USER)
                 .active(true)
                 .build();
 
@@ -141,12 +208,14 @@ class UserServiceImplTest {
                 .id(1L)
                 .fullName("Sandy Eissa")
                 .email("sandy@gmail.com")
-                .role(Role.USER)
-                .active(true)
-                .build();
+                .role(com.vois.simpleewalletsystem.dto.generated.Role.USER)
+                .active(true);
 
         when(userRepository.findById(1L))
                 .thenReturn(Optional.of(user));
+
+        when(userRepository.findByEmail("sandy@gmail.com"))
+                .thenReturn(Optional.of(currentUser));
 
         when(userMapper.toResponse(user))
                 .thenReturn(expectedResponse);
@@ -154,16 +223,32 @@ class UserServiceImplTest {
         UserResponse actualResponse =
                 userService.getUserById(1L);
 
-        assertEquals(expectedResponse.getId(), actualResponse.getId());
-        assertEquals(expectedResponse.getEmail(), actualResponse.getEmail());
+        assertEquals(
+                expectedResponse.getId(),
+                actualResponse.getId()
+        );
 
-        verify(userRepository).findById(1L);
-        verify(userMapper).toResponse(user);
+        assertEquals(
+                expectedResponse.getEmail(),
+                actualResponse.getEmail()
+        );
+
+        verify(userRepository)
+                .findById(1L);
+
+        verify(userRepository)
+                .findByEmail("sandy@gmail.com");
+
+        verify(userMapper)
+                .toResponse(user);
     }
 
- main
+
     @Test
     void shouldThrowExceptionWhenUserNotFound() {
+
+        // No SecurityContext is needed here.
+        // findById() returns empty before getCurrentUser() is called.
 
         when(userRepository.findById(1L))
                 .thenReturn(Optional.empty());
@@ -173,13 +258,19 @@ class UserServiceImplTest {
                 () -> userService.getUserById(1L)
         );
 
-        verify(userRepository).findById(1L);
+        verify(userRepository)
+                .findById(1L);
+
+        verify(userRepository, never())
+                .findByEmail(anyString());
+
         verifyNoInteractions(userMapper);
     }
 
 
     @Test
     void shouldThrowExceptionWhenUserIsDeactivated() {
+
 
         User user = User.builder()
                 .id(1L)
@@ -194,7 +285,12 @@ class UserServiceImplTest {
                 () -> userService.getUserById(1L)
         );
 
-        verify(userRepository).findById(1L);
+        verify(userRepository)
+                .findById(1L);
+
+        verify(userRepository, never())
+                .findByEmail(anyString());
+
         verifyNoInteractions(userMapper);
     }
 
@@ -202,17 +298,27 @@ class UserServiceImplTest {
     @Test
     void shouldUpdateUserSuccessfully() {
 
+        setUpSecurityContext("sandy@gmail.com");
+
         UserRequest request = new UserRequest()
                 .fullName("New Name")
                 .email("new@gmail.com")
                 .password("12345678")
-                .role(Role.USER);
+                .role(com.vois.simpleewalletsystem.dto.generated.Role.USER);
 
         User user = User.builder()
                 .id(1L)
                 .fullName("Old Name")
                 .email("old@gmail.com")
                 .password("oldEncodedPassword")
+                .role(com.vois.simpleewalletsystem.enums.Role.USER)
+                .active(true)
+                .build();
+
+        User currentUser = User.builder()
+                .id(1L)
+                .email("sandy@gmail.com")
+                .role(com.vois.simpleewalletsystem.enums.Role.USER)
                 .active(true)
                 .build();
 
@@ -224,6 +330,9 @@ class UserServiceImplTest {
 
         when(userRepository.findById(1L))
                 .thenReturn(Optional.of(user));
+
+        when(userRepository.findByEmail("sandy@gmail.com"))
+                .thenReturn(Optional.of(currentUser));
 
         when(userRepository.existsByEmail(request.getEmail()))
                 .thenReturn(false);
@@ -245,21 +354,42 @@ class UserServiceImplTest {
                 actualResponse.getFullName()
         );
 
-        verify(userRepository).findById(1L);
-        verify(userRepository).existsByEmail(request.getEmail());
-        verify(passwordEncoder).encode(request.getPassword());
-        verify(userRepository).save(user);
-        verify(userMapper).toResponse(user);
+        assertEquals(
+                expectedResponse.getEmail(),
+                actualResponse.getEmail()
+        );
+
+        verify(userRepository)
+                .findById(1L);
+
+        verify(userRepository)
+                .findByEmail("sandy@gmail.com");
+
+        verify(userRepository)
+                .existsByEmail(request.getEmail());
+
+        verify(passwordEncoder)
+                .encode(request.getPassword());
+
+        verify(userRepository)
+                .save(user);
+
+        verify(userMapper)
+                .toResponse(user);
     }
+
 
     @Test
     void shouldThrowExceptionWhenUpdatingNonExistingUser() {
+
+        // No SecurityContext is needed.
+        // findById() fails before getCurrentUser() is called.
 
         UserRequest request = new UserRequest()
                 .fullName("New Name")
                 .email("new@gmail.com")
                 .password("12345678")
-                .role(Role.USER);
+                .role(com.vois.simpleewalletsystem.dto.generated.Role.USER);
 
         when(userRepository.findById(1L))
                 .thenReturn(Optional.empty());
@@ -269,10 +399,13 @@ class UserServiceImplTest {
                 () -> userService.updateUser(1L, request)
         );
 
-        verify(userRepository).findById(1L);
-        verifyNoInteractions(userMapper);
-    }
+        verify(userRepository)
+                .findById(1L);
 
+        verify(userRepository, never())
+                .findByEmail(anyString());
+
+        verifyNoInteractions(userMapper);
         verifyNoInteractions(passwordEncoder);
     }
 
@@ -280,20 +413,33 @@ class UserServiceImplTest {
     @Test
     void shouldThrowExceptionWhenUpdatingWithExistingEmail() {
 
+        setUpSecurityContext("sandy@gmail.com");
+
         UserRequest request = new UserRequest()
                 .fullName("New Name")
                 .email("new@gmail.com")
                 .password("12345678")
-                .role(Role.USER);
+                .role(com.vois.simpleewalletsystem.dto.generated.Role.USER);
 
         User user = User.builder()
                 .id(1L)
                 .email("old@gmail.com")
+                .role(com.vois.simpleewalletsystem.enums.Role.USER)
+                .active(true)
+                .build();
+
+        User currentUser = User.builder()
+                .id(1L)
+                .email("sandy@gmail.com")
+                .role(com.vois.simpleewalletsystem.enums.Role.USER)
                 .active(true)
                 .build();
 
         when(userRepository.findById(1L))
                 .thenReturn(Optional.of(user));
+
+        when(userRepository.findByEmail("sandy@gmail.com"))
+                .thenReturn(Optional.of(currentUser));
 
         when(userRepository.existsByEmail("new@gmail.com"))
                 .thenReturn(true);
@@ -303,13 +449,20 @@ class UserServiceImplTest {
                 () -> userService.updateUser(1L, request)
         );
 
-        verify(userRepository).findById(1L);
-        verify(userRepository).existsByEmail("new@gmail.com");
+        verify(userRepository)
+                .findById(1L);
+
+        verify(userRepository)
+                .findByEmail("sandy@gmail.com");
+
+        verify(userRepository)
+                .existsByEmail("new@gmail.com");
+
+        verify(userRepository, never())
+                .save(any(User.class));
+
         verifyNoInteractions(passwordEncoder);
         verifyNoInteractions(userMapper);
-    }
-
-        verify(userRepository, never()).save(any(User.class));
     }
 
 
@@ -328,8 +481,11 @@ class UserServiceImplTest {
 
         assertFalse(user.getActive());
 
-        verify(userRepository).findById(1L);
-        verify(userRepository).save(user);
+        verify(userRepository)
+                .findById(1L);
+
+        verify(userRepository)
+                .save(user);
     }
 
 
@@ -344,8 +500,11 @@ class UserServiceImplTest {
                 () -> userService.deactivateUser(1L)
         );
 
-        verify(userRepository).findById(1L);
-        verify(userRepository, never()).save(any(User.class));
+        verify(userRepository)
+                .findById(1L);
+
+        verify(userRepository, never())
+                .save(any(User.class));
     }
 
 
@@ -355,6 +514,7 @@ class UserServiceImplTest {
         User user = User.builder()
                 .id(1L)
                 .fullName("Sandy")
+                .role(com.vois.simpleewalletsystem.enums.Role.USER)
                 .active(true)
                 .build();
 
@@ -373,43 +533,59 @@ class UserServiceImplTest {
                 userService.getAllUsers();
 
         assertEquals(1, users.size());
-        assertEquals("Sandy", users.get(0).getFullName());
 
-        verify(userRepository).findByActiveTrue();
-        verify(userMapper).toResponse(user);
+        assertEquals(
+                "Sandy",
+                users.get(0).getFullName()
+        );
+
+        verify(userRepository)
+                .findByActiveTrue();
+
+        verify(userMapper)
+                .toResponse(user);
     }
-@Test
-void shouldActivateUserSuccessfully() {
 
-    User user = User.builder()
-            .id(1L)
-            .active(false)
-            .build();
 
-    when(userRepository.findById(1L))
-            .thenReturn(Optional.of(user));
+    @Test
+    void shouldActivateUserSuccessfully() {
 
-    userService.activateUser(1L);
+        User user = User.builder()
+                .id(1L)
+                .active(false)
+                .build();
 
-    assertEquals(true, user.getActive());
+        when(userRepository.findById(1L))
+                .thenReturn(Optional.of(user));
 
-    verify(userRepository).findById(1L);
-    verify(userRepository).save(user);
+        userService.activateUser(1L);
+
+        assertEquals(true, user.getActive());
+
+        verify(userRepository)
+                .findById(1L);
+
+        verify(userRepository)
+                .save(user);
+    }
+
+
+    @Test
+    void shouldThrowExceptionWhenActivatingNonExistingUser() {
+
+        when(userRepository.findById(1L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                UserNotFoundException.class,
+                () -> userService.activateUser(1L)
+        );
+
+        verify(userRepository)
+                .findById(1L);
+
+        verify(userRepository, never())
+                .save(any(User.class));
+    }
 }
 
-
-@Test
-void shouldThrowExceptionWhenActivatingNonExistingUser() {
-
-    when(userRepository.findById(1L))
-            .thenReturn(Optional.empty());
-
-    assertThrows(
-            UserNotFoundException.class,
-            () -> userService.activateUser(1L)
-    );
-
-    verify(userRepository).findById(1L);
-    verify(userRepository, never()).save(any(User.class));
-}
-}

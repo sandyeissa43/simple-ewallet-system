@@ -44,8 +44,6 @@ public class TransactionServiceImpl implements TransactionService {
 
         Wallet wallet = getAuthorizedWallet(walletId);
 
-        checkOwnership(wallet, getCurrentUser());
-
         if (wallet.getBalance().compareTo(request.getAmount()) < 0) {
             throw new InsufficientBalanceException(
                     "Insufficient balance for withdrawal. Current balance: "
@@ -76,8 +74,7 @@ public class TransactionServiceImpl implements TransactionService {
             Long walletId,
             TransferRequest request) {
 
-
-        checkOwnership(sourceWallet, getCurrentUser());
+        Wallet sourceWallet = getAuthorizedWallet(walletId);
 
         Wallet destinationWallet = walletRepository.findById(
                         request.getDestinationWalletId())
@@ -85,7 +82,7 @@ public class TransactionServiceImpl implements TransactionService {
                         new WalletNotFoundException(
                                 "Destination wallet not found with ID: "
                                         + request.getDestinationWalletId()));
-       
+
         if (sourceWallet.getId().equals(destinationWallet.getId())) {
             throw new InvalidTransactionException(
                     "Source and destination wallets must be different"
@@ -137,7 +134,6 @@ public class TransactionServiceImpl implements TransactionService {
                 transactionRepository
                         .findBySourceWalletIdOrDestinationWalletIdOrderByCreatedAtDesc(
                                 walletId,
-
                                 walletId
                         );
         return transactions.stream()
@@ -155,8 +151,6 @@ public class TransactionServiceImpl implements TransactionService {
          * User can only deposit into their own wallet.
          */
         Wallet wallet = getAuthorizedWallet(walletId);
-
-        checkOwnership(wallet, getCurrentUser());
 
         wallet.setBalance(
                 wallet.getBalance().add(request.getAmount())
@@ -234,6 +228,16 @@ public class TransactionServiceImpl implements TransactionService {
         return convertToDTO(transaction);
     }
 
+    private User getCurrentUser() {
+
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new UserNotFoundException("Authenticated user not found"));
+    }
 
     private Wallet getAuthorizedWallet(Long walletId) {
 

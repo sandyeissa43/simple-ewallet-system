@@ -13,21 +13,17 @@ public interface TransactionService {
             Long walletId,
             WithdrawalRequest request
     );
-
     TransactionResponse transfer(
             Long walletId,
             TransferRequest request
     );
-
     TransactionResponse deposit(
             Long walletId,
             DepositRequest request
     );
-
     List<TransactionResponse> getTransactionHistory(
             Long walletId
     );
-
     TransactionResponse getTransactionById(
             Long transactionId
     );

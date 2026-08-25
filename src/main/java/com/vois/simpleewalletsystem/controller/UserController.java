@@ -1,6 +1,7 @@
 package com.vois.simpleewalletsystem.controller;
 import com.vois.simpleewalletsystem.dto.generated.UserRequest;
 import com.vois.simpleewalletsystem.dto.generated.UserResponse;
+import com.vois.simpleewalletsystem.dto.request.ChangePasswordRequest;
 import com.vois.simpleewalletsystem.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -115,4 +116,33 @@ public class UserController {
                 "User activated successfully"
         );
     }
+    @Operation(
+            summary = "Get current user",
+            description = "Retrieves the currently authenticated user's information"
+    )
+    @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<UserResponse> getCurrentUser() {
+
+        UserResponse response =
+                userService.getCurrentUser();
+
+        return ResponseEntity.ok(response);
+    }
+
+
+    @PatchMapping("/me/password")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<String> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request) {
+
+        userService.changePassword(request);
+
+        return ResponseEntity.ok(
+                "Password changed successfully"
+        );
+    }
+
+
+
 }

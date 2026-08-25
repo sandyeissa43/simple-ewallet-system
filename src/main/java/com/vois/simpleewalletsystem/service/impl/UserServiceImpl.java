@@ -2,9 +2,11 @@ package com.vois.simpleewalletsystem.service.impl;
 
 import com.vois.simpleewalletsystem.dto.generated.UserRequest;
 import com.vois.simpleewalletsystem.dto.generated.UserResponse;
-import com.vois.simpleewalletsystem.enums.Role;
+import com.vois.simpleewalletsystem.dto.request.ChangePasswordRequest;
 import com.vois.simpleewalletsystem.entity.User;
+import com.vois.simpleewalletsystem.enums.Role;
 import com.vois.simpleewalletsystem.exception.DuplicateEmailException;
+import com.vois.simpleewalletsystem.exception.InvalidPasswordException;
 import com.vois.simpleewalletsystem.exception.UserNotFoundException;
 import com.vois.simpleewalletsystem.mapper.UserMapper;
 import com.vois.simpleewalletsystem.repository.UserRepository;
@@ -19,8 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import com.vois.simpleewalletsystem.service.WalletService;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -46,7 +46,8 @@ public class UserServiceImpl implements UserService {
                 .fullName(request.getFullName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(com.vois.simpleewalletsystem.enums.Role.valueOf(request.getRole().name()))
+                .role(com.vois.simpleewalletsystem.enums.Role.valueOf(
+                        request.getRole().name()))
                 .active(true)
                 .build();
 
@@ -54,7 +55,10 @@ public class UserServiceImpl implements UserService {
 
         walletService.createWallet(savedUser);
 
-        log.info("User created successfully with id {}", savedUser.getId());
+        log.info(
+                "User created successfully with id {}",
+                savedUser.getId()
+        );
 
         return userMapper.toResponse(savedUser);
     }
@@ -64,30 +68,42 @@ public class UserServiceImpl implements UserService {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
-                        new UserNotFoundException("User not found with id: " + id));
+                        new UserNotFoundException(
+                                "User not found with id: " + id
+                        )
+                );
 
         if (!user.getActive()) {
-            throw new UserNotFoundException("User is deactivated");
+            throw new UserNotFoundException(
+                    "User is deactivated"
+            );
         }
 
-        checkOwnership(user, getCurrentUser());
+        checkOwnership(user, getAuthenticatedUser());
 
         return userMapper.toResponse(user);
     }
 
     @Override
-    public UserResponse updateUser(Long id, UserRequest request) {
+    public UserResponse updateUser(
+            Long id,
+            UserRequest request) {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
-                        new UserNotFoundException("User not found with id: " + id));
+                        new UserNotFoundException(
+                                "User not found with id: " + id
+                        )
+                );
 
-        checkOwnership(user, getCurrentUser());
+        checkOwnership(user, getAuthenticatedUser());
 
         if (!user.getEmail().equals(request.getEmail())
                 && userRepository.existsByEmail(request.getEmail())) {
 
-            throw new DuplicateEmailException("Email already exists");
+            throw new DuplicateEmailException(
+                    "Email already exists"
+            );
         }
 
         user.setFullName(request.getFullName());
@@ -97,13 +113,18 @@ public class UserServiceImpl implements UserService {
                 && !request.getPassword().isBlank()) {
 
             user.setPassword(
-                    passwordEncoder.encode(request.getPassword())
+                    passwordEncoder.encode(
+                            request.getPassword()
+                    )
             );
         }
 
         User updatedUser = userRepository.save(user);
 
-        log.info("User updated successfully with id {}", updatedUser.getId());
+        log.info(
+                "User updated successfully with id {}",
+                updatedUser.getId()
+        );
 
         return userMapper.toResponse(updatedUser);
     }
@@ -113,13 +134,19 @@ public class UserServiceImpl implements UserService {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
-                        new UserNotFoundException("User not found with id: " + id));
+                        new UserNotFoundException(
+                                "User not found with id: " + id
+                        )
+                );
 
         user.setActive(false);
 
         userRepository.save(user);
 
-        log.info("User deactivated successfully with id {}", id);
+        log.info(
+                "User deactivated successfully with id {}",
+                id
+        );
     }
 
     @Override
@@ -136,27 +163,39 @@ public class UserServiceImpl implements UserService {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
-                        new UserNotFoundException("User not found with id: " + id));
+                        new UserNotFoundException(
+                                "User not found with id: " + id
+                        )
+                );
 
         user.setActive(true);
 
         userRepository.save(user);
 
-        log.info("User activated successfully with id {}", id);
+        log.info(
+                "User activated successfully with id {}",
+                id
+        );
     }
 
-    private User getCurrentUser() {
+    private User getAuthenticatedUser() {
 
-        String email = SecurityContextHolder.getContext()
+        String email = SecurityContextHolder
+                .getContext()
                 .getAuthentication()
                 .getName();
 
         return userRepository.findByEmail(email)
                 .orElseThrow(() ->
-                        new UserNotFoundException("User not found"));
+                        new UserNotFoundException(
+                                "User not found"
+                        )
+                );
     }
 
-    private void checkOwnership(User target, User caller) {
+    private void checkOwnership(
+            User target,
+            User caller) {
 
         if (caller.getRole() == Role.ADMIN) {
             return;
@@ -168,5 +207,37 @@ public class UserServiceImpl implements UserService {
                     "You do not have access to this user's data"
             );
         }
+    }
+
+    @Override
+    public UserResponse getCurrentUser() {
+
+        User user = getAuthenticatedUser();
+
+        return userMapper.toResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(ChangePasswordRequest request) {
+
+        User user = getAuthenticatedUser();
+
+        if (!passwordEncoder.matches(
+                request.getCurrentPassword(),
+                user.getPassword())) {
+
+            throw new InvalidPasswordException(
+                    "Current password is incorrect"
+            );
+        }
+
+        user.setPassword(
+                passwordEncoder.encode(
+                        request.getNewPassword()
+                )
+        );
+
+        userRepository.save(user);
     }
 }
